@@ -29,13 +29,13 @@
 #include <algorithm>
 #include "ns3/log.h"
 #include "ns3/wifi-mac-header.h"
-#include "aodv-neighbor.h"
+#include "flooding-neighbor.h"
 
 namespace ns3 {
 
-NS_LOG_COMPONENT_DEFINE ("AodvNeighbors");
+NS_LOG_COMPONENT_DEFINE ("FloodingNeighbors");
 
-namespace aodv {
+namespace flooding {
 Neighbors::Neighbors (Time delay)
   : m_ntimer (Timer::CANCEL_ON_DESTROY)
 {
@@ -190,6 +190,6 @@ Neighbors::ProcessTxError (WifiMacHeader const & hdr)
   Purge ();
 }
 
-}  // namespace aodv
+}  // namespace flooding
 }  // namespace ns3
 

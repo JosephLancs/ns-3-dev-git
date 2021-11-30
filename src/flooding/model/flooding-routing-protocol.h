@@ -28,11 +28,8 @@
 #ifndef AODVROUTINGPROTOCOL_H
 #define AODVROUTINGPROTOCOL_H
 
-#include "aodv-rtable.h"
-#include "aodv-rqueue.h"
 #include "aodv-packet.h"
 #include "aodv-neighbor.h"
-#include "aodv-dpd.h"
 #include "ns3/node.h"
 #include "ns3/random-variable-stream.h"
 #include "ns3/output-stream-wrapper.h"

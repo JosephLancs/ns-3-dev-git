@@ -8,20 +8,12 @@ def build(bld):
         #'model/aodv-dpd.cc',
         #'model/aodv-rtable.cc',
         #'model/aodv-rqueue.cc',
-        'model/aodv-packet.cc',
-        'model/aodv-neighbor.cc',
-        'model/aodv-routing-protocol.cc',
-        'helper/aodv-helper.cc',
+        'model/flooding-packet.cc',
+        'model/flooding-neighbor.cc',
+        'model/flooding-routing-protocol.cc',
+        'helper/flooding-helper.cc',
         ]
 
-    #aodv_test = bld.create_ns3_module_test_library('aodv')
-    #aodv_test.source = [
-     #   'test/aodv-id-cache-test-suite.cc',
-      #  'test/aodv-test-suite.cc',
-       # 'test/aodv-regression.cc',
-        #'test/bug-772.cc',
-        #'test/loopback.cc',
-        #]
 
     headers = bld(features='ns3header')
     headers.module = 'flooding'
@@ -30,10 +22,10 @@ def build(bld):
         #'model/aodv-dpd.h',
         #'model/aodv-rtable.h',
         #'model/aodv-rqueue.h',
-        'model/aodv-packet.h',
-        'model/aodv-neighbor.h',
-        'model/aodv-routing-protocol.h',
-        'helper/aodv-helper.h',
+        'model/flooding-packet.h',
+        'model/flooding-neighbor.h',
+        'model/flooding-routing-protocol.h',
+        'helper/flooding-helper.h',
         ]
 
     if bld.env['ENABLE_EXAMPLES']:

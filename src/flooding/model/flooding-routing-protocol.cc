@@ -16,11 +16,11 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  * Based on
- *      NS-2 AODV model developed by the CMU/MONARCH group and optimized and
+ *      NS-2 FLOODING model developed by the CMU/MONARCH group and optimized and
  *      tuned by Samir Das and Mahesh Marina, University of Cincinnati;
  *
- *      AODV-UU implementation by Erik Nordström of Uppsala University
- *      http://core.it.uu.se/core/index.php/AODV-UU
+ *      FLOODING-UU implementation by Erik Nordström of Uppsala University
+ *      http://core.it.uu.se/core/index.php/FLOODING-UU
  *
  * Authors: Elena Buchatskaia <borovkovaes@iitp.ru>
  *          Pavel Boyko <boyko@iitp.ru>
@@ -28,7 +28,7 @@
 #define NS_LOG_APPEND_CONTEXT                                   \
   if (m_ipv4) { std::clog << "[node " << m_ipv4->GetObject<Node> ()->GetId () << "] "; }
 
-#include "aodv-routing-protocol.h"
+#include "flooding-routing-protocol.h"
 #include "ns3/log.h"
 #include "ns3/boolean.h"
 #include "ns3/random-variable-stream.h"
@@ -46,17 +46,17 @@
 
 namespace ns3 {
 
-NS_LOG_COMPONENT_DEFINE ("AodvRoutingProtocol");
+NS_LOG_COMPONENT_DEFINE ("FloodingRoutingProtocol");
 
-namespace aodv {
+namespace flooding {
 NS_OBJECT_ENSURE_REGISTERED (RoutingProtocol);
 
-/// UDP Port for AODV control traffic
-const uint32_t RoutingProtocol::AODV_PORT = 654;
+/// UDP Port for flooding control traffic
+const uint32_t RoutingProtocol::FLOODING_PORT = 654;
 
 /**
-* \ingroup aodv
-* \brief Tag used by AODV implementation
+* \ingroup FLOODING
+* \brief Tag used by FLOODING implementation
 */
 class DeferredRouteOutputTag : public Tag
 {
@@ -77,9 +77,9 @@ public:
    */
   static TypeId GetTypeId ()
   {
-    static TypeId tid = TypeId ("ns3::aodv::DeferredRouteOutputTag")
+    static TypeId tid = TypeId ("ns3::flooding::DeferredRouteOutputTag")
       .SetParent<Tag> ()
-      .SetGroupName ("Aodv")
+      .SetGroupName ("Flooding")
       .AddConstructor<DeferredRouteOutputTag> ()
     ;
     return tid;
@@ -181,9 +181,9 @@ RoutingProtocol::RoutingProtocol ()
 TypeId
 RoutingProtocol::GetTypeId (void)
 {
-  static TypeId tid = TypeId ("ns3::aodv::RoutingProtocol")
+  static TypeId tid = TypeId ("ns3::flooding::RoutingProtocol")
     .SetParent<Ipv4RoutingProtocol> ()
-    .SetGroupName ("Aodv")
+    .SetGroupName ("Flooding")
     .AddConstructor<RoutingProtocol> ()
     .AddAttribute ("HelloInterval", "HELLO messages emission interval.",
                    TimeValue (Seconds (1)),
@@ -341,7 +341,7 @@ RoutingProtocol::PrintRoutingTable (Ptr<OutputStreamWrapper> stream, Time::Unit 
   *stream->GetStream () << "Node: " << m_ipv4->GetObject<Node> ()->GetId ()
                         << "; Time: " << Now ().As (unit)
                         << ", Local time: " << GetObject<Node> ()->GetLocalTime ().As (unit)
-                        << ", AODV Routing table" << std::endl;
+                        << ", FLOODING Routing table" << std::endl;
 
   m_routingTable.Print (stream);
   *stream->GetStream () << std::endl;
@@ -386,7 +386,7 @@ RoutingProtocol::RouteOutput (Ptr<Packet> p, const Ipv4Header &header,
   if (m_socketAddresses.empty ())
     {
       sockerr = Socket::ERROR_NOROUTETOHOST;
-      NS_LOG_LOGIC ("No aodv interfaces");
+      NS_LOG_LOGIC ("No flooding interfaces");
       Ptr<Ipv4Route> route;
       return route;
     }
@@ -453,7 +453,7 @@ RoutingProtocol::RouteInput (Ptr<const Packet> p, const Ipv4Header &header,
   NS_LOG_FUNCTION (this << p->GetUid () << header.GetDestination () << idev->GetAddress ());
   if (m_socketAddresses.empty ())
     {
-      NS_LOG_LOGIC ("No aodv interfaces");
+      NS_LOG_LOGIC ("No flooding interfaces");
       return false;
     }
   NS_ASSERT (m_ipv4 != 0);
@@ -482,7 +482,7 @@ RoutingProtocol::RouteInput (Ptr<const Packet> p, const Ipv4Header &header,
       return true;
     }
 
-  // AODV is not a multicast routing protocol
+  // FLOODING is not a multicast routing protocol
   if (dst.IsMulticast ())
     {
       return false;
@@ -523,9 +523,9 @@ RoutingProtocol::RouteInput (Ptr<const Packet> p, const Ipv4Header &header,
                 {
                   UdpHeader udpHeader;
                   p->PeekHeader (udpHeader);
-                  if (udpHeader.GetDestinationPort () == AODV_PORT)
+                  if (udpHeader.GetDestinationPort () == FLOODING_PORT)
                     {
-                      // AODV packets sent in broadcast are already managed
+                      // flooding packets sent in broadcast are already managed
                       return true;
                     }
                 }
@@ -672,7 +672,7 @@ RoutingProtocol::NotifyInterfaceUp (uint32_t i)
   Ptr<Ipv4L3Protocol> l3 = m_ipv4->GetObject<Ipv4L3Protocol> ();
   if (l3->GetNAddresses (i) > 1)
     {
-      NS_LOG_WARN ("AODV does not work with more then one address per each interface.");
+      NS_LOG_WARN ("flooding does not work with more then one address per each interface.");
     }
   Ipv4InterfaceAddress iface = l3->GetAddress (i, 0);
   if (iface.GetLocal () == Ipv4Address ("127.0.0.1"))
@@ -684,9 +684,9 @@ RoutingProtocol::NotifyInterfaceUp (uint32_t i)
   Ptr<Socket> socket = Socket::CreateSocket (GetObject<Node> (),
                                              UdpSocketFactory::GetTypeId ());
   NS_ASSERT (socket != 0);
-  socket->SetRecvCallback (MakeCallback (&RoutingProtocol::RecvAodv, this));
+  socket->SetRecvCallback (MakeCallback (&RoutingProtocol::RecvFlooding, this));
   socket->BindToNetDevice (l3->GetNetDevice (i));
-  socket->Bind (InetSocketAddress (iface.GetLocal (), AODV_PORT));
+  socket->Bind (InetSocketAddress (iface.GetLocal (), FLOODING_PORT));
   socket->SetAllowBroadcast (true);
   socket->SetIpRecvTtl (true);
   m_socketAddresses.insert (std::make_pair (socket, iface));
@@ -695,9 +695,9 @@ RoutingProtocol::NotifyInterfaceUp (uint32_t i)
   socket = Socket::CreateSocket (GetObject<Node> (),
                                  UdpSocketFactory::GetTypeId ());
   NS_ASSERT (socket != 0);
-  socket->SetRecvCallback (MakeCallback (&RoutingProtocol::RecvAodv, this));
+  socket->SetRecvCallback (MakeCallback (&RoutingProtocol::RecvFlooding, this));
   socket->BindToNetDevice (l3->GetNetDevice (i));
-  socket->Bind (InetSocketAddress (iface.GetBroadcast (), AODV_PORT));
+  socket->Bind (InetSocketAddress (iface.GetBroadcast (), FLOODING_PORT));
   socket->SetAllowBroadcast (true);
   socket->SetIpRecvTtl (true);
   m_socketSubnetBroadcastAddresses.insert (std::make_pair (socket, iface));
@@ -762,7 +762,7 @@ RoutingProtocol::NotifyInterfaceDown (uint32_t i)
 
   if (m_socketAddresses.empty ())
     {
-      NS_LOG_LOGIC ("No aodv interfaces");
+      NS_LOG_LOGIC ("No flooding interfaces");
       m_htimer.Cancel ();
       m_nb.Clear ();
       m_routingTable.Clear ();
@@ -794,9 +794,9 @@ RoutingProtocol::NotifyAddAddress (uint32_t i, Ipv4InterfaceAddress address)
           Ptr<Socket> socket = Socket::CreateSocket (GetObject<Node> (),
                                                      UdpSocketFactory::GetTypeId ());
           NS_ASSERT (socket != 0);
-          socket->SetRecvCallback (MakeCallback (&RoutingProtocol::RecvAodv,this));
+          socket->SetRecvCallback (MakeCallback (&RoutingProtocol::RecvFlooding,this));
           socket->BindToNetDevice (l3->GetNetDevice (i));
-          socket->Bind (InetSocketAddress (iface.GetLocal (), AODV_PORT));
+          socket->Bind (InetSocketAddress (iface.GetLocal (), FLOODING_PORT));
           socket->SetAllowBroadcast (true);
           m_socketAddresses.insert (std::make_pair (socket, iface));
 
@@ -804,9 +804,9 @@ RoutingProtocol::NotifyAddAddress (uint32_t i, Ipv4InterfaceAddress address)
           socket = Socket::CreateSocket (GetObject<Node> (),
                                          UdpSocketFactory::GetTypeId ());
           NS_ASSERT (socket != 0);
-          socket->SetRecvCallback (MakeCallback (&RoutingProtocol::RecvAodv, this));
+          socket->SetRecvCallback (MakeCallback (&RoutingProtocol::RecvFlooding, this));
           socket->BindToNetDevice (l3->GetNetDevice (i));
-          socket->Bind (InetSocketAddress (iface.GetBroadcast (), AODV_PORT));
+          socket->Bind (InetSocketAddress (iface.GetBroadcast (), FLOODING_PORT));
           socket->SetAllowBroadcast (true);
           socket->SetIpRecvTtl (true);
           m_socketSubnetBroadcastAddresses.insert (std::make_pair (socket, iface));
@@ -822,7 +822,7 @@ RoutingProtocol::NotifyAddAddress (uint32_t i, Ipv4InterfaceAddress address)
     }
   else
     {
-      NS_LOG_LOGIC ("AODV does not work with more then one address per each interface. Ignore added address");
+      NS_LOG_LOGIC ("flooding does not work with more then one address per each interface. Ignore added address");
     }
 }
 
@@ -852,10 +852,10 @@ RoutingProtocol::NotifyRemoveAddress (uint32_t i, Ipv4InterfaceAddress address)
           Ptr<Socket> socket = Socket::CreateSocket (GetObject<Node> (),
                                                      UdpSocketFactory::GetTypeId ());
           NS_ASSERT (socket != 0);
-          socket->SetRecvCallback (MakeCallback (&RoutingProtocol::RecvAodv, this));
+          socket->SetRecvCallback (MakeCallback (&RoutingProtocol::RecvFlooding, this));
           // Bind to any IP address so that broadcasts can be received
           socket->BindToNetDevice (l3->GetNetDevice (i));
-          socket->Bind (InetSocketAddress (iface.GetLocal (), AODV_PORT));
+          socket->Bind (InetSocketAddress (iface.GetLocal (), FLOODING_PORT));
           socket->SetAllowBroadcast (true);
           socket->SetIpRecvTtl (true);
           m_socketAddresses.insert (std::make_pair (socket, iface));
@@ -864,9 +864,9 @@ RoutingProtocol::NotifyRemoveAddress (uint32_t i, Ipv4InterfaceAddress address)
           socket = Socket::CreateSocket (GetObject<Node> (),
                                          UdpSocketFactory::GetTypeId ());
           NS_ASSERT (socket != 0);
-          socket->SetRecvCallback (MakeCallback (&RoutingProtocol::RecvAodv, this));
+          socket->SetRecvCallback (MakeCallback (&RoutingProtocol::RecvFlooding, this));
           socket->BindToNetDevice (l3->GetNetDevice (i));
-          socket->Bind (InetSocketAddress (iface.GetBroadcast (), AODV_PORT));
+          socket->Bind (InetSocketAddress (iface.GetBroadcast (), FLOODING_PORT));
           socket->SetAllowBroadcast (true);
           socket->SetIpRecvTtl (true);
           m_socketSubnetBroadcastAddresses.insert (std::make_pair (socket, iface));
@@ -879,7 +879,7 @@ RoutingProtocol::NotifyRemoveAddress (uint32_t i, Ipv4InterfaceAddress address)
         }
       if (m_socketAddresses.empty ())
         {
-          NS_LOG_LOGIC ("No aodv interfaces");
+          NS_LOG_LOGIC ("No flooding interfaces");
           m_htimer.Cancel ();
           m_nb.Clear ();
           m_routingTable.Clear ();
@@ -888,7 +888,7 @@ RoutingProtocol::NotifyRemoveAddress (uint32_t i, Ipv4InterfaceAddress address)
     }
   else
     {
-      NS_LOG_LOGIC ("Remove address not participating in AODV operation");
+      NS_LOG_LOGIC ("Remove address not participating in flooding operation");
     }
 }
 
@@ -917,17 +917,17 @@ RoutingProtocol::LoopbackRoute (const Ipv4Header & hdr, Ptr<NetDevice> oif) cons
   rt->SetDestination (hdr.GetDestination ());
   //
   // Source address selection here is tricky.  The loopback route is
-  // returned when AODV does not have a route; this causes the packet
+  // returned when flooding does not have a route; this causes the packet
   // to be looped back and handled (cached) in RouteInput() method
   // while a route is found. However, connection-oriented protocols
   // like TCP need to create an endpoint four-tuple (src, src port,
   // dst, dst port) and create a pseudo-header for checksumming.  So,
-  // AODV needs to guess correctly what the eventual source address
+  // flooding needs to guess correctly what the eventual source address
   // will be.
   //
   // For single interface, single address nodes, this is not a problem.
   // When there are possibly multiple outgoing interfaces, the policy
-  // implemented here is to pick the first available AODV interface.
+  // implemented here is to pick the first available flooding interface.
   // If RouteOutput() caller specified an outgoing interface, that
   // further constrains the selection of source address
   //
@@ -950,7 +950,7 @@ RoutingProtocol::LoopbackRoute (const Ipv4Header & hdr, Ptr<NetDevice> oif) cons
     {
       rt->SetSource (j->second.GetLocal ());
     }
-  NS_ASSERT_MSG (rt->GetSource () != Ipv4Address (), "Valid AODV source address not found");
+  NS_ASSERT_MSG (rt->GetSource () != Ipv4Address (), "Valid flooding source address not found");
   rt->SetGateway (Ipv4Address ("127.0.0.1"));
   rt->SetOutputDevice (m_lo);
   return rt;
@@ -1039,7 +1039,7 @@ RoutingProtocol::SendRequest (Ipv4Address dst)
   m_requestId++;
   rreqHeader.SetId (m_requestId);
 
-  // Send RREQ as subnet directed broadcast from each interface used by aodv
+  // Send RREQ as subnet directed broadcast from each interface used by flooding
   for (std::map<Ptr<Socket>, Ipv4InterfaceAddress>::const_iterator j =
          m_socketAddresses.begin (); j != m_socketAddresses.end (); ++j)
     {
@@ -1054,7 +1054,7 @@ RoutingProtocol::SendRequest (Ipv4Address dst)
       tag.SetTtl (ttl);
       packet->AddPacketTag (tag);
       packet->AddHeader (rreqHeader);
-      TypeHeader tHeader (AODVTYPE_RREQ);
+      TypeHeader tHeader (FLOODINGTYPE_RREQ);
       packet->AddHeader (tHeader);
       // Send to all-hosts broadcast if on /32 addr, subnet-directed otherwise
       Ipv4Address destination;
@@ -1076,7 +1076,7 @@ RoutingProtocol::SendRequest (Ipv4Address dst)
 void
 RoutingProtocol::SendTo (Ptr<Socket> socket, Ptr<Packet> packet, Ipv4Address destination)
 {
-  socket->SendTo (packet, 0, InetSocketAddress (destination, AODV_PORT));
+  socket->SendTo (packet, 0, InetSocketAddress (destination, FLOODING_PORT));
 
 }
 void
@@ -1110,7 +1110,7 @@ RoutingProtocol::ScheduleRreqRetry (Ipv4Address dst)
 }
 
 void
-RoutingProtocol::RecvAodv (Ptr<Socket> socket)
+RoutingProtocol::RecvFlooding (Ptr<Socket> socket)
 {
   NS_LOG_FUNCTION (this << socket);
   Address sourceAddress;
@@ -1131,34 +1131,34 @@ RoutingProtocol::RecvAodv (Ptr<Socket> socket)
     {
       NS_ASSERT_MSG (false, "Received a packet from an unknown socket");
     }
-  NS_LOG_DEBUG ("AODV node " << this << " received a AODV packet from " << sender << " to " << receiver);
+  NS_LOG_DEBUG ("flooding node " << this << " received a flooding packet from " << sender << " to " << receiver);
 
   UpdateRouteToNeighbor (sender, receiver);
-  TypeHeader tHeader (AODVTYPE_RREQ);
+  TypeHeader tHeader (FLOODINGTYPE_RREQ);
   packet->RemoveHeader (tHeader);
   if (!tHeader.IsValid ())
     {
-      NS_LOG_DEBUG ("AODV message " << packet->GetUid () << " with unknown type received: " << tHeader.Get () << ". Drop");
+      NS_LOG_DEBUG ("flooding message " << packet->GetUid () << " with unknown type received: " << tHeader.Get () << ". Drop");
       return; // drop
     }
   switch (tHeader.Get ())
     {
-    case AODVTYPE_RREQ:
+    case FLOODINGTYPE_RREQ:
       {
         RecvRequest (packet, receiver, sender);
         break;
       }
-    case AODVTYPE_RREP:
+    case FLOODINGTYPE_RREP:
       {
         RecvReply (packet, receiver, sender);
         break;
       }
-    case AODVTYPE_RERR:
+    case FLOODINGTYPE_RERR:
       {
         RecvError (packet, sender);
         break;
       }
-    case AODVTYPE_RREP_ACK:
+    case FLOODINGTYPE_RREP_ACK:
       {
         RecvReplyAck (sender);
         break;
@@ -1386,7 +1386,7 @@ RoutingProtocol::RecvRequest (Ptr<Packet> p, Ipv4Address receiver, Ipv4Address s
       ttl.SetTtl (tag.GetTtl () - 1);
       packet->AddPacketTag (ttl);
       packet->AddHeader (rreqHeader);
-      TypeHeader tHeader (AODVTYPE_RREQ);
+      TypeHeader tHeader (FLOODINGTYPE_RREQ);
       packet->AddHeader (tHeader);
       // Send to all-hosts broadcast if on /32 addr, subnet-directed otherwise
       Ipv4Address destination;
@@ -1423,11 +1423,11 @@ RoutingProtocol::SendReply (RreqHeader const & rreqHeader, RoutingTableEntry con
   tag.SetTtl (toOrigin.GetHop ());
   packet->AddPacketTag (tag);
   packet->AddHeader (rrepHeader);
-  TypeHeader tHeader (AODVTYPE_RREP);
+  TypeHeader tHeader (FLOODINGTYPE_RREP);
   packet->AddHeader (tHeader);
   Ptr<Socket> socket = FindSocketWithInterfaceAddress (toOrigin.GetInterface ());
   NS_ASSERT (socket);
-  socket->SendTo (packet, 0, InetSocketAddress (toOrigin.GetNextHop (), AODV_PORT));
+  socket->SendTo (packet, 0, InetSocketAddress (toOrigin.GetNextHop (), FLOODING_PORT));
 }
 
 void
@@ -1458,11 +1458,11 @@ RoutingProtocol::SendReplyByIntermediateNode (RoutingTableEntry & toDst, Routing
   tag.SetTtl (toOrigin.GetHop ());
   packet->AddPacketTag (tag);
   packet->AddHeader (rrepHeader);
-  TypeHeader tHeader (AODVTYPE_RREP);
+  TypeHeader tHeader (FLOODINGTYPE_RREP);
   packet->AddHeader (tHeader);
   Ptr<Socket> socket = FindSocketWithInterfaceAddress (toOrigin.GetInterface ());
   NS_ASSERT (socket);
-  socket->SendTo (packet, 0, InetSocketAddress (toOrigin.GetNextHop (), AODV_PORT));
+  socket->SendTo (packet, 0, InetSocketAddress (toOrigin.GetNextHop (), FLOODING_PORT));
 
   // Generating gratuitous RREPs
   if (gratRep)
@@ -1475,12 +1475,12 @@ RoutingProtocol::SendReplyByIntermediateNode (RoutingTableEntry & toDst, Routing
       gratTag.SetTtl (toDst.GetHop ());
       packetToDst->AddPacketTag (gratTag);
       packetToDst->AddHeader (gratRepHeader);
-      TypeHeader type (AODVTYPE_RREP);
+      TypeHeader type (FLOODINGTYPE_RREP);
       packetToDst->AddHeader (type);
       Ptr<Socket> socket = FindSocketWithInterfaceAddress (toDst.GetInterface ());
       NS_ASSERT (socket);
       NS_LOG_LOGIC ("Send gratuitous RREP " << packet->GetUid ());
-      socket->SendTo (packetToDst, 0, InetSocketAddress (toDst.GetNextHop (), AODV_PORT));
+      socket->SendTo (packetToDst, 0, InetSocketAddress (toDst.GetNextHop (), FLOODING_PORT));
     }
 }
 
@@ -1489,7 +1489,7 @@ RoutingProtocol::SendReplyAck (Ipv4Address neighbor)
 {
   NS_LOG_FUNCTION (this << " to " << neighbor);
   RrepAckHeader h;
-  TypeHeader typeHeader (AODVTYPE_RREP_ACK);
+  TypeHeader typeHeader (FLOODINGTYPE_RREP_ACK);
   Ptr<Packet> packet = Create<Packet> ();
   SocketIpTtlTag tag;
   tag.SetTtl (1);
@@ -1500,7 +1500,7 @@ RoutingProtocol::SendReplyAck (Ipv4Address neighbor)
   m_routingTable.LookupRoute (neighbor, toNeighbor);
   Ptr<Socket> socket = FindSocketWithInterfaceAddress (toNeighbor.GetInterface ());
   NS_ASSERT (socket);
-  socket->SendTo (packet, 0, InetSocketAddress (neighbor, AODV_PORT));
+  socket->SendTo (packet, 0, InetSocketAddress (neighbor, FLOODING_PORT));
 }
 
 void
@@ -1632,11 +1632,11 @@ RoutingProtocol::RecvReply (Ptr<Packet> p, Ipv4Address receiver, Ipv4Address sen
   ttl.SetTtl (tag.GetTtl () - 1);
   packet->AddPacketTag (ttl);
   packet->AddHeader (rrepHeader);
-  TypeHeader tHeader (AODVTYPE_RREP);
+  TypeHeader tHeader (FLOODINGTYPE_RREP);
   packet->AddHeader (tHeader);
   Ptr<Socket> socket = FindSocketWithInterfaceAddress (toOrigin.GetInterface ());
   NS_ASSERT (socket);
-  socket->SendTo (packet, 0, InetSocketAddress (toOrigin.GetNextHop (), AODV_PORT));
+  socket->SendTo (packet, 0, InetSocketAddress (toOrigin.GetNextHop (), FLOODING_PORT));
 }
 
 void
@@ -1716,7 +1716,7 @@ RoutingProtocol::RecvError (Ptr<Packet> p, Ipv4Address src )
     {
       if (!rerrHeader.AddUnDestination (i->first, i->second))
         {
-          TypeHeader typeHeader (AODVTYPE_RERR);
+          TypeHeader typeHeader (FLOODINGTYPE_RERR);
           Ptr<Packet> packet = Create<Packet> ();
           SocketIpTtlTag tag;
           tag.SetTtl (1);
@@ -1736,7 +1736,7 @@ RoutingProtocol::RecvError (Ptr<Packet> p, Ipv4Address src )
     }
   if (rerrHeader.GetDestCount () != 0)
     {
-      TypeHeader typeHeader (AODVTYPE_RERR);
+      TypeHeader typeHeader (FLOODINGTYPE_RERR);
       Ptr<Packet> packet = Create<Packet> ();
       SocketIpTtlTag tag;
       tag.SetTtl (1);
@@ -1852,7 +1852,7 @@ RoutingProtocol::SendHello ()
       tag.SetTtl (1);
       packet->AddPacketTag (tag);
       packet->AddHeader (helloHeader);
-      TypeHeader tHeader (AODVTYPE_RREP);
+      TypeHeader tHeader (FLOODINGTYPE_RREP);
       packet->AddHeader (tHeader);
       // Send to all-hosts broadcast if on /32 addr, subnet-directed otherwise
       Ipv4Address destination;
@@ -1915,7 +1915,7 @@ RoutingProtocol::SendRerrWhenBreaksLinkToNextHop (Ipv4Address nextHop)
       if (!rerrHeader.AddUnDestination (i->first, i->second))
         {
           NS_LOG_LOGIC ("Send RERR message with maximum size.");
-          TypeHeader typeHeader (AODVTYPE_RERR);
+          TypeHeader typeHeader (FLOODINGTYPE_RERR);
           Ptr<Packet> packet = Create<Packet> ();
           SocketIpTtlTag tag;
           tag.SetTtl (1);
@@ -1935,7 +1935,7 @@ RoutingProtocol::SendRerrWhenBreaksLinkToNextHop (Ipv4Address nextHop)
     }
   if (rerrHeader.GetDestCount () != 0)
     {
-      TypeHeader typeHeader (AODVTYPE_RERR);
+      TypeHeader typeHeader (FLOODINGTYPE_RERR);
       Ptr<Packet> packet = Create<Packet> ();
       SocketIpTtlTag tag;
       tag.SetTtl (1);
@@ -1972,14 +1972,14 @@ RoutingProtocol::SendRerrWhenNoRouteToForward (Ipv4Address dst,
   tag.SetTtl (1);
   packet->AddPacketTag (tag);
   packet->AddHeader (rerrHeader);
-  packet->AddHeader (TypeHeader (AODVTYPE_RERR));
+  packet->AddHeader (TypeHeader (FLOODINGTYPE_RERR));
   if (m_routingTable.LookupValidRoute (origin, toOrigin))
     {
       Ptr<Socket> socket = FindSocketWithInterfaceAddress (
           toOrigin.GetInterface ());
       NS_ASSERT (socket);
       NS_LOG_LOGIC ("Unicast RERR to the source of the data transmission");
-      socket->SendTo (packet, 0, InetSocketAddress (toOrigin.GetNextHop (), AODV_PORT));
+      socket->SendTo (packet, 0, InetSocketAddress (toOrigin.GetNextHop (), FLOODING_PORT));
     }
   else
     {
@@ -2000,7 +2000,7 @@ RoutingProtocol::SendRerrWhenNoRouteToForward (Ipv4Address dst,
             {
               destination = iface.GetBroadcast ();
             }
-          socket->SendTo (packet->Copy (), 0, InetSocketAddress (destination, AODV_PORT));
+          socket->SendTo (packet->Copy (), 0, InetSocketAddress (destination, FLOODING_PORT));
         }
     }
 }
@@ -2125,5 +2125,5 @@ RoutingProtocol::DoInitialize (void)
   Ipv4RoutingProtocol::DoInitialize ();
 }
 
-} //namespace aodv
+} //namespace flooding
 } //namespace ns3

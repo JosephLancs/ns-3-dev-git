@@ -25,12 +25,12 @@
  * Authors: Elena Buchatskaia <borovkovaes@iitp.ru>
  *          Pavel Boyko <boyko@iitp.ru>
  */
-#include "aodv-packet.h"
+#include "flooding-packet.h"
 #include "ns3/address-utils.h"
 #include "ns3/packet.h"
 
 namespace ns3 {
-namespace aodv {
+namespace flooding {
 
 NS_OBJECT_ENSURE_REGISTERED (TypeHeader);
 
@@ -43,9 +43,9 @@ TypeHeader::TypeHeader (MessageType t)
 TypeId
 TypeHeader::GetTypeId ()
 {
-  static TypeId tid = TypeId ("ns3::aodv::TypeHeader")
+  static TypeId tid = TypeId ("ns3::flooding::TypeHeader")
     .SetParent<Header> ()
-    .SetGroupName ("Aodv")
+    .SetGroupName ("Flooding")
     .AddConstructor<TypeHeader> ()
   ;
   return tid;
@@ -77,10 +77,10 @@ TypeHeader::Deserialize (Buffer::Iterator start)
   m_valid = true;
   switch (type)
     {
-    case AODVTYPE_RREQ:
-    case AODVTYPE_RREP:
-    case AODVTYPE_RERR:
-    case AODVTYPE_RREP_ACK:
+    case FLOODINGTYPE_RREQ:
+    case FLOODINGTYPE_RREP:
+    case FLOODINGTYPE_RERR:
+    case FLOODINGTYPE_RREP_ACK:
       {
         m_type = (MessageType) type;
         break;
@@ -98,22 +98,22 @@ TypeHeader::Print (std::ostream &os) const
 {
   switch (m_type)
     {
-    case AODVTYPE_RREQ:
+    case FLOODINGTYPE_RREQ:
       {
         os << "RREQ";
         break;
       }
-    case AODVTYPE_RREP:
+    case FLOODINGTYPE_RREP:
       {
         os << "RREP";
         break;
       }
-    case AODVTYPE_RERR:
+    case FLOODINGTYPE_RERR:
       {
         os << "RERR";
         break;
       }
-    case AODVTYPE_RREP_ACK:
+    case FLOODINGTYPE_RREP_ACK:
       {
         os << "RREP_ACK";
         break;
@@ -157,9 +157,9 @@ NS_OBJECT_ENSURE_REGISTERED (RreqHeader);
 TypeId
 RreqHeader::GetTypeId ()
 {
-  static TypeId tid = TypeId ("ns3::aodv::RreqHeader")
+  static TypeId tid = TypeId ("ns3::flooding::RreqHeader")
     .SetParent<Header> ()
-    .SetGroupName ("Aodv")
+    .SetGroupName ("Flooding")
     .AddConstructor<RreqHeader> ()
   ;
   return tid;
@@ -313,9 +313,9 @@ NS_OBJECT_ENSURE_REGISTERED (RrepHeader);
 TypeId
 RrepHeader::GetTypeId ()
 {
-  static TypeId tid = TypeId ("ns3::aodv::RrepHeader")
+  static TypeId tid = TypeId ("ns3::flooding::RrepHeader")
     .SetParent<Header> ()
-    .SetGroupName ("Aodv")
+    .SetGroupName ("Flooding")
     .AddConstructor<RrepHeader> ()
   ;
   return tid;
@@ -460,9 +460,9 @@ NS_OBJECT_ENSURE_REGISTERED (RrepAckHeader);
 TypeId
 RrepAckHeader::GetTypeId ()
 {
-  static TypeId tid = TypeId ("ns3::aodv::RrepAckHeader")
+  static TypeId tid = TypeId ("ns3::flooding::RrepAckHeader")
     .SetParent<Header> ()
-    .SetGroupName ("Aodv")
+    .SetGroupName ("Flooding")
     .AddConstructor<RrepAckHeader> ()
   ;
   return tid;
@@ -528,9 +528,9 @@ NS_OBJECT_ENSURE_REGISTERED (RerrHeader);
 TypeId
 RerrHeader::GetTypeId ()
 {
-  static TypeId tid = TypeId ("ns3::aodv::RerrHeader")
+  static TypeId tid = TypeId ("ns3::flooding::RerrHeader")
     .SetParent<Header> ()
-    .SetGroupName ("Aodv")
+    .SetGroupName ("Flooding")
     .AddConstructor<RerrHeader> ()
   ;
   return tid;
