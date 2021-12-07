@@ -17,8 +17,8 @@
  *
  * Authors: Pavel Boyko <boyko@iitp.ru>, written after OlsrHelper by Mathieu Lacage <mathieu.lacage@sophia.inria.fr>
  */
-#include "aodv-helper.h"
-#include "ns3/aodv-routing-protocol.h"
+#include "flooding-helper.h"
+#include "ns3/flooding-routing-protocol.h"
 #include "ns3/node-list.h"
 #include "ns3/names.h"
 #include "ns3/ptr.h"
@@ -27,34 +27,34 @@
 namespace ns3
 {
 
-AodvHelper::AodvHelper() : 
+FloodingHelper::FloodingHelper() : 
   Ipv4RoutingHelper ()
 {
-  m_agentFactory.SetTypeId ("ns3::aodv::RoutingProtocol");
+  m_agentFactory.SetTypeId ("ns3::flooding::RoutingProtocol");
 }
 
-AodvHelper* 
-AodvHelper::Copy (void) const 
+FloodingHelper* 
+FloodingHelper::Copy (void) const 
 {
-  return new AodvHelper (*this); 
+  return new FloodingHelper (*this); 
 }
 
 Ptr<Ipv4RoutingProtocol> 
-AodvHelper::Create (Ptr<Node> node) const
+FloodingHelper::Create (Ptr<Node> node) const
 {
-  Ptr<aodv::RoutingProtocol> agent = m_agentFactory.Create<aodv::RoutingProtocol> ();
+  Ptr<flooding::RoutingProtocol> agent = m_agentFactory.Create<flooding::RoutingProtocol> ();
   node->AggregateObject (agent);
   return agent;
 }
 
 void 
-AodvHelper::Set (std::string name, const AttributeValue &value)
+FloodingHelper::Set (std::string name, const AttributeValue &value)
 {
   m_agentFactory.Set (name, value);
 }
 
 int64_t
-AodvHelper::AssignStreams (NodeContainer c, int64_t stream)
+FloodingHelper::AssignStreams (NodeContainer c, int64_t stream)
 {
   int64_t currentStream = stream;
   Ptr<Node> node;
@@ -65,26 +65,26 @@ AodvHelper::AssignStreams (NodeContainer c, int64_t stream)
       NS_ASSERT_MSG (ipv4, "Ipv4 not installed on node");
       Ptr<Ipv4RoutingProtocol> proto = ipv4->GetRoutingProtocol ();
       NS_ASSERT_MSG (proto, "Ipv4 routing not installed on node");
-      Ptr<aodv::RoutingProtocol> aodv = DynamicCast<aodv::RoutingProtocol> (proto);
-      if (aodv)
+      Ptr<flooding::RoutingProtocol> flooding = DynamicCast<flooding::RoutingProtocol> (proto);
+      if (flooding)
         {
-          currentStream += aodv->AssignStreams (currentStream);
+          currentStream += flooding->AssignStreams (currentStream);
           continue;
         }
-      // Aodv may also be in a list
+      // flooding may also be in a list
       Ptr<Ipv4ListRouting> list = DynamicCast<Ipv4ListRouting> (proto);
       if (list)
         {
           int16_t priority;
           Ptr<Ipv4RoutingProtocol> listProto;
-          Ptr<aodv::RoutingProtocol> listAodv;
+          Ptr<flooding::RoutingProtocol> listFlooding;
           for (uint32_t i = 0; i < list->GetNRoutingProtocols (); i++)
             {
               listProto = list->GetRoutingProtocol (i, priority);
-              listAodv = DynamicCast<aodv::RoutingProtocol> (listProto);
-              if (listAodv)
+              listFlooding = DynamicCast<flooding::RoutingProtocol> (listProto);
+              if (listFlooding)
                 {
-                  currentStream += listAodv->AssignStreams (currentStream);
+                  currentStream += listFlooding->AssignStreams (currentStream);
                   break;
                 }
             }

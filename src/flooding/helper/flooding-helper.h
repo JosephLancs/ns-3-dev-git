@@ -18,8 +18,8 @@
  * Authors: Pavel Boyko <boyko@iitp.ru>, written after OlsrHelper by Mathieu Lacage <mathieu.lacage@sophia.inria.fr>
  */
 
-#ifndef AODV_HELPER_H
-#define AODV_HELPER_H
+#ifndef FLOODING_HELPER_H
+#define FLOODING_HELPER_H
 
 #include "ns3/object-factory.h"
 #include "ns3/node.h"
@@ -28,22 +28,22 @@
 
 namespace ns3 {
 /**
- * \ingroup aodv
- * \brief Helper class that adds AODV routing to nodes.
+ * \ingroup Flooding
+ * \brief Helper class that adds Flooding routing to nodes.
  */
-class AodvHelper : public Ipv4RoutingHelper
+class FloodingHelper : public Ipv4RoutingHelper
 {
 public:
-  AodvHelper ();
+  FloodingHelper ();
 
   /**
-   * \returns pointer to clone of this AodvHelper
+   * \returns pointer to clone of this FloodingHelper
    *
    * \internal
    * This method is mainly for internal use by the other helpers;
    * clients are expected to free the dynamic memory allocated by this method
    */
-  AodvHelper* Copy (void) const;
+  FloodingHelper* Copy (void) const;
 
   /**
    * \param node the node on which the routing protocol will run
@@ -51,14 +51,14 @@ public:
    *
    * This method will be called by ns3::InternetStackHelper::Install
    *
-   * \todo support installing AODV on the subset of all available IP interfaces
+   * \todo support installing Flooding on the subset of all available IP interfaces
    */
   virtual Ptr<Ipv4RoutingProtocol> Create (Ptr<Node> node) const;
   /**
    * \param name the name of the attribute to set
    * \param value the value of the attribute to set.
    *
-   * This method controls the attributes of ns3::aodv::RoutingProtocol
+   * This method controls the attributes of ns3::Flooding::RoutingProtocol
    */
   void Set (std::string name, const AttributeValue &value);
   /**
@@ -68,17 +68,17 @@ public:
    * should have previously been called by the user.
    *
    * \param stream first stream index to use
-   * \param c NodeContainer of the set of nodes for which AODV
+   * \param c NodeContainer of the set of nodes for which Flooding
    *          should be modified to use a fixed stream
    * \return the number of stream indices assigned by this helper
    */
   int64_t AssignStreams (NodeContainer c, int64_t stream);
 
 private:
-  /** the factory to create AODV routing object */
+  /** the factory to create Flooding routing object */
   ObjectFactory m_agentFactory;
 };
 
 }
 
-#endif /* AODV_HELPER_H */
+#endif /* Flooding_HELPER_H */

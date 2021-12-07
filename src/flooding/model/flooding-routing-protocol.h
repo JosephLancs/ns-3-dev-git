@@ -226,17 +226,17 @@ private:
   Ptr<NetDevice> m_lo;
 
   /// Routing table
-  RoutingTable m_routingTable;
+  //RoutingTable m_routingTable;
   /// A "drop-front" queue used by the routing layer to buffer packets to which it does not have a route.
-  RequestQueue m_queue;
+  //RequestQueue m_queue;
   /// Broadcast ID
   uint32_t m_requestId;
   /// Request sequence number
   uint32_t m_seqNo;
   /// Handle duplicated RREQ
-  IdCache m_rreqIdCache;
+  //IdCache m_rreqIdCache;
   /// Handle duplicated broadcast/multicast packets
-  DuplicatePacketDetection m_dpd;
+  //DuplicatePacketDetection m_dpd;
   /// Handle neighbors
   Neighbors m_nb;
   /// Number of RREQs used for RREQ rate control
@@ -344,13 +344,13 @@ private:
   /// Send RREQ
   void SendRequest (Ipv4Address dst);
   /// Send RREP
-  void SendReply (RreqHeader const & rreqHeader, RoutingTableEntry const & toOrigin);
-  /** Send RREP by intermediate node
+  /*void SendReply (RreqHeader const & rreqHeader, RoutingTableEntry const & toOrigin);
+  ** Send RREP by intermediate node
    * \param toDst routing table entry to destination
    * \param toOrigin routing table entry to originator
    * \param gratRep indicates whether a gratuitous RREP should be unicast to destination
-   */
-  void SendReplyByIntermediateNode (RoutingTableEntry & toDst, RoutingTableEntry & toOrigin, bool gratRep);
+   *
+  void SendReplyByIntermediateNode (RoutingTableEntry & toDst, RoutingTableEntry & toOrigin, bool gratRep);*/
   /// Send RREP_ACK
   void SendReplyAck (Ipv4Address neighbor);
   /// Initiate RERR
