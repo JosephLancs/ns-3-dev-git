@@ -96,31 +96,7 @@ TypeHeader::Deserialize (Buffer::Iterator start)
 void
 TypeHeader::Print (std::ostream &os) const
 {
-  switch (m_type)
-    {
-    case FLOODINGTYPE_RREQ:
-      {
-        os << "RREQ";
-        break;
-      }
-    case FLOODINGTYPE_RREP:
-      {
-        os << "RREP";
-        break;
-      }
-    case FLOODINGTYPE_RERR:
-      {
-        os << "RERR";
-        break;
-      }
-    case FLOODINGTYPE_RREP_ACK:
-      {
-        os << "RREP_ACK";
-        break;
-      }
-    default:
-      os << "UNKNOWN_TYPE";
-    }
+  os << "PACK";
 }
 
 bool

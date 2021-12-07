@@ -150,7 +150,7 @@ RoutingProtocol::RoutingProtocol ()
 TypeId
 RoutingProtocol::GetTypeId (void)
 {
-  static TypeId tid = TypeId ("ns3::flooding::RoutingProtocol")
+  /*static TypeId tid = TypeId ("ns3::flooding::RoutingProtocol")
     .SetParent<Ipv4RoutingProtocol> ()
     .SetGroupName ("Flooding")
     .AddConstructor<RoutingProtocol> ()
@@ -264,14 +264,33 @@ RoutingProtocol::GetTypeId (void)
                    StringValue ("ns3::UniformRandomVariable"),
                    MakePointerAccessor (&RoutingProtocol::m_uniformRandomVariable),
                    MakePointerChecker<UniformRandomVariable> ())
-  ;
-  return tid;
+  ;*/
+  return null;
 }
 
 
 RoutingProtocol::~RoutingProtocol ()
 {
 }
+
+void
+ RoutingProtocol::DoDispose ()
+ {/*
+   m_ipv4 = 0;
+   for (std::map<Ptr<Socket>, Ipv4InterfaceAddress>::iterator iter =
+          m_socketAddresses.begin (); iter != m_socketAddresses.end (); iter++)
+     {
+       iter->first->Close ();
+     }
+   m_socketAddresses.clear ();
+   for (std::map<Ptr<Socket>, Ipv4InterfaceAddress>::iterator iter =
+          m_socketSubnetBroadcastAddresses.begin (); iter != m_socketSubnetBroadcastAddresses.end (); iter++)
+     {
+       iter->first->Close ();
+     }
+   m_socketSubnetBroadcastAddresses.clear ();
+   Ipv4RoutingProtocol::DoDispose ();*/
+ }
 
 void
 RoutingProtocol::Start ()
@@ -295,6 +314,7 @@ Ptr<Ipv4Route>
 RoutingProtocol::RouteOutput (Ptr<Packet> p, const Ipv4Header &header,
                               Ptr<NetDevice> oif, Socket::SocketErrno &sockerr)
 {
+  /*
   NS_LOG_FUNCTION (this << header << (oif ? oif->GetIfIndex () : 0));
   if (!p)
     {
@@ -339,12 +359,14 @@ RoutingProtocol::RouteOutput (Ptr<Packet> p, const Ipv4Header &header,
       p->AddPacketTag (tag);
     }
   return LoopbackRoute (header, oif);
+  */
 }
 
 void
 RoutingProtocol::DeferredRouteOutput (Ptr<const Packet> p, const Ipv4Header & header,
                                       UnicastForwardCallback ucb, ErrorCallback ecb)
 {
+  /*
   NS_LOG_FUNCTION (this << p << header);
   NS_ASSERT (p != 0 && p != Ptr<Packet> ());
 
@@ -361,6 +383,7 @@ RoutingProtocol::DeferredRouteOutput (Ptr<const Packet> p, const Ipv4Header & he
           SendRequest (header.GetDestination ());
         }
     }
+    */
 }
 
 bool
@@ -368,6 +391,7 @@ RoutingProtocol::RouteInput (Ptr<const Packet> p, const Ipv4Header &header,
                              Ptr<const NetDevice> idev, UnicastForwardCallback ucb,
                              MulticastForwardCallback mcb, LocalDeliverCallback lcb, ErrorCallback ecb)
 {
+  /*
   NS_LOG_FUNCTION (this << p->GetUid () << header.GetDestination () << idev->GetAddress ());
   if (m_socketAddresses.empty ())
     {
@@ -503,12 +527,15 @@ RoutingProtocol::RouteInput (Ptr<const Packet> p, const Ipv4Header &header,
 
   // Forwarding
   return Forwarding (p, header, ucb, ecb);
+  */
+  return true;
 }
 
 bool
 RoutingProtocol::Forwarding (Ptr<const Packet> p, const Ipv4Header & header,
                              UnicastForwardCallback ucb, ErrorCallback ecb)
 {
+  /*
   NS_LOG_FUNCTION (this);
   Ipv4Address dst = header.GetDestination ();
   Ipv4Address origin = header.GetSource ();
@@ -526,7 +553,8 @@ RoutingProtocol::Forwarding (Ptr<const Packet> p, const Ipv4Header & header,
            *  Lifetime field of the source, destination and the next hop on the
            *  path to the destination is updated to be no less than the current
            *  time plus ActiveRouteTimeout.
-           */
+           *
+          
           UpdateRouteLifeTime (origin, m_activeRouteTimeout);
           UpdateRouteLifeTime (dst, m_activeRouteTimeout);
           UpdateRouteLifeTime (route->GetGateway (), m_activeRouteTimeout);
@@ -534,7 +562,7 @@ RoutingProtocol::Forwarding (Ptr<const Packet> p, const Ipv4Header & header,
            *  Since the route between each originator and destination pair is expected to be symmetric, the
            *  Active Route Lifetime for the previous hop, along the reverse path back to the IP source, is also updated
            *  to be no less than the current time plus ActiveRouteTimeout
-           */
+           *
           RoutingTableEntry toOrigin;
           m_routingTable.LookupRoute (origin, toOrigin);
           UpdateRouteLifeTime (toOrigin.GetNextHop (), m_activeRouteTimeout);
@@ -558,12 +586,14 @@ RoutingProtocol::Forwarding (Ptr<const Packet> p, const Ipv4Header & header,
   NS_LOG_LOGIC ("route not found to " << dst << ". Send RERR message.");
   NS_LOG_DEBUG ("Drop packet " << p->GetUid () << " because no route to forward it.");
   SendRerrWhenNoRouteToForward (dst, 0, origin);
+  */
   return false;
 }
 
 void
 RoutingProtocol::SetIpv4 (Ptr<Ipv4> ipv4)
 {
+  /*
   NS_ASSERT (ipv4 != 0);
   NS_ASSERT (m_ipv4 == 0);
 
@@ -574,18 +604,19 @@ RoutingProtocol::SetIpv4 (Ptr<Ipv4> ipv4)
   m_lo = m_ipv4->GetNetDevice (0);
   NS_ASSERT (m_lo != 0);
   // Remember lo route
-  RoutingTableEntry rt (/*device=*/ m_lo, /*dst=*/ Ipv4Address::GetLoopback (), /*know seqno=*/ true, /*seqno=*/ 0,
-                                    /*iface=*/ Ipv4InterfaceAddress (Ipv4Address::GetLoopback (), Ipv4Mask ("255.0.0.0")),
-                                    /*hops=*/ 1, /*next hop=*/ Ipv4Address::GetLoopback (),
-                                    /*lifetime=*/ Simulator::GetMaximumSimulationTime ());
+  RoutingTableEntry rt (/*device=* m_lo, /*dst=* Ipv4Address::GetLoopback (), /*know seqno=* true, /*seqno=* 0,
+                                    /*iface=* Ipv4InterfaceAddress (Ipv4Address::GetLoopback (), Ipv4Mask ("255.0.0.0")),
+                                    /*hops=* 1, /*next hop=* Ipv4Address::GetLoopback (),
+                                    /*lifetime=* Simulator::GetMaximumSimulationTime ());
   m_routingTable.AddRoute (rt);
-
+  */
   Simulator::ScheduleNow (&RoutingProtocol::Start, this);
 }
 
 void
 RoutingProtocol::NotifyInterfaceUp (uint32_t i)
 {
+  /*
   NS_LOG_FUNCTION (this << m_ipv4->GetAddress (i, 0).GetLocal ());
   Ptr<Ipv4L3Protocol> l3 = m_ipv4->GetObject<Ipv4L3Protocol> ();
   if (l3->GetNAddresses (i) > 1)
@@ -622,8 +653,8 @@ RoutingProtocol::NotifyInterfaceUp (uint32_t i)
 
   // Add local broadcast record to the routing table
   Ptr<NetDevice> dev = m_ipv4->GetNetDevice (m_ipv4->GetInterfaceForAddress (iface.GetLocal ()));
-  RoutingTableEntry rt (/*device=*/ dev, /*dst=*/ iface.GetBroadcast (), /*know seqno=*/ true, /*seqno=*/ 0, /*iface=*/ iface,
-                                    /*hops=*/ 1, /*next hop=*/ iface.GetBroadcast (), /*lifetime=*/ Simulator::GetMaximumSimulationTime ());
+  RoutingTableEntry rt (/*device=* dev, /*dst=* iface.GetBroadcast (), /*know seqno=* true, /*seqno=* 0, /*iface=* iface,
+                                    /*hops=* 1, /*next hop=* iface.GetBroadcast (), /*lifetime=* Simulator::GetMaximumSimulationTime ());
   m_routingTable.AddRoute (rt);
 
   if (l3->GetInterface (i)->GetArpCache ())
@@ -644,10 +675,12 @@ RoutingProtocol::NotifyInterfaceUp (uint32_t i)
     }
 
   mac->TraceConnectWithoutContext ("TxErrHeader", m_nb.GetTxErrorCallback ());
+  */
 }
 bool
 RoutingProtocol::IsMyOwnAddress (Ipv4Address src)
 {
+  /*
   NS_LOG_FUNCTION (this << src);
   for (std::map<Ptr<Socket>, Ipv4InterfaceAddress>::const_iterator j =
          m_socketAddresses.begin (); j != m_socketAddresses.end (); ++j)
@@ -658,6 +691,7 @@ RoutingProtocol::IsMyOwnAddress (Ipv4Address src)
           return true;
         }
     }
+  */
   return false;
 }
 
@@ -665,12 +699,12 @@ void
 RoutingProtocol::SendTo (Ptr<Socket> socket, Ptr<Packet> packet, Ipv4Address destination)
 {
   socket->SendTo (packet, 0, InetSocketAddress (destination, FLOODING_PORT));
-
 }
 
 void
 RoutingProtocol::RecvFlooding (Ptr<Socket> socket)
 {
+  /*
   NS_LOG_FUNCTION (this << socket);
   Address sourceAddress;
   Ptr<Packet> packet = socket->RecvFrom (sourceAddress);
@@ -723,11 +757,13 @@ RoutingProtocol::RecvFlooding (Ptr<Socket> socket)
         break;
       }
     }
+    */
 }
 
 void
 RoutingProtocol::RecvRequest (Ptr<Packet> p, Ipv4Address receiver, Ipv4Address src)
 {
+  /*
   NS_LOG_FUNCTION (this);
   RreqHeader rreqHeader;
   p->RemoveHeader (rreqHeader);
@@ -749,7 +785,7 @@ RoutingProtocol::RecvRequest (Ptr<Packet> p, Ipv4Address receiver, Ipv4Address s
   /*
    *  Node checks to determine whether it has received a RREQ with the same Originator IP Address and RREQ ID.
    *  If such a RREQ has been received, the node silently discards the newly received RREQ.
-   */
+   *
   if (m_rreqIdCache.IsDuplicate (origin, id))
     {
       NS_LOG_DEBUG ("Ignoring RREQ due to duplicate");
@@ -769,14 +805,14 @@ RoutingProtocol::RecvRequest (Ptr<Packet> p, Ipv4Address receiver, Ipv4Address s
    *  4. the hop count is copied from the Hop Count in the RREQ message;
    *  5. the Lifetime is set to be the maximum of (ExistingLifetime, MinimalLifetime), where
    *     MinimalLifetime = current time + 2*NetTraversalTime - 2*HopCount*NodeTraversalTime
-   */
+   *
   RoutingTableEntry toOrigin;
   if (!m_routingTable.LookupRoute (origin, toOrigin))
     {
       Ptr<NetDevice> dev = m_ipv4->GetNetDevice (m_ipv4->GetInterfaceForAddress (receiver));
-      RoutingTableEntry newEntry (/*device=*/ dev, /*dst=*/ origin, /*validSeno=*/ true, /*seqNo=*/ rreqHeader.GetOriginSeqno (),
-                                              /*iface=*/ m_ipv4->GetAddress (m_ipv4->GetInterfaceForAddress (receiver), 0), /*hops=*/ hop,
-                                              /*nextHop*/ src, /*timeLife=*/ Time ((2 * m_netTraversalTime - 2 * hop * m_nodeTraversalTime)));
+      RoutingTableEntry newEntry (/*device=* dev, /*dst=* origin, /*validSeno=* true, /*seqNo=* rreqHeader.GetOriginSeqno (),
+                                              /*iface=* m_ipv4->GetAddress (m_ipv4->GetInterfaceForAddress (receiver), 0), /*hops=* hop,
+                                              /*nextHop* src, /*timeLife=* Time ((2 * m_netTraversalTime - 2 * hop * m_nodeTraversalTime)));
       m_routingTable.AddRoute (newEntry);
     }
   else
@@ -844,14 +880,14 @@ RoutingProtocol::RecvRequest (Ptr<Packet> p, Ipv4Address receiver, Ipv4Address s
   /*
    * (ii) or it has an active route to the destination, the destination sequence number in the node's existing route table entry for the destination
    *      is valid and greater than or equal to the Destination Sequence Number of the RREQ, and the "destination only" flag is NOT set.
-   */
+   *
   RoutingTableEntry toDst;
   Ipv4Address dst = rreqHeader.GetDst ();
   if (m_routingTable.LookupRoute (dst, toDst))
     {
       /*
        * Drop RREQ, This node RREP will make a loop.
-       */
+       *
       if (toDst.GetNextHop () == src)
         {
           NS_LOG_DEBUG ("Drop RREQ from " << src << ", dest next hop " << toDst.GetNextHop ());
@@ -862,7 +898,7 @@ RoutingProtocol::RecvRequest (Ptr<Packet> p, Ipv4Address receiver, Ipv4Address s
        * received in the RREQ message, and the destination sequence value currently maintained by the node for the requested destination.
        * However, the forwarding node MUST NOT modify its maintained value for the destination sequence number, even if the value
        * received in the incoming RREQ is larger than the value currently maintained by the forwarding node.
-       */
+       *
       if ((rreqHeader.GetUnknownSeqno () || (int32_t (toDst.GetSeqNo ()) - int32_t (rreqHeader.GetDstSeqno ()) >= 0))
           && toDst.GetValidSeqNo () )
         {
@@ -911,22 +947,24 @@ RoutingProtocol::RecvRequest (Ptr<Packet> p, Ipv4Address receiver, Ipv4Address s
       Simulator::Schedule (Time (MilliSeconds (m_uniformRandomVariable->GetInteger (0, 10))), &RoutingProtocol::SendTo, this, socket, packet, destination);
 
     }
+    */
 }
 
 void
 RoutingProtocol::SendReply (RreqHeader const & rreqHeader, RoutingTableEntry const & toOrigin)
 {
+  /*
   NS_LOG_FUNCTION (this << toOrigin.GetDestination ());
   /*
    * Destination node MUST increment its own sequence number by one if the sequence number in the RREQ packet is equal to that
    * incremented value. Otherwise, the destination does not change its sequence number before generating the  RREP message.
-   */
+   *
   if (!rreqHeader.GetUnknownSeqno () && (rreqHeader.GetDstSeqno () == m_seqNo + 1))
     {
       m_seqNo++;
     }
-  RrepHeader rrepHeader ( /*prefixSize=*/ 0, /*hops=*/ 0, /*dst=*/ rreqHeader.GetDst (),
-                                          /*dstSeqNo=*/ m_seqNo, /*origin=*/ toOrigin.GetDestination (), /*lifeTime=*/ m_myRouteTimeout);
+  RrepHeader rrepHeader ( /*prefixSize=* 0, /*hops=* 0, /*dst=* rreqHeader.GetDst (),
+                                          /*dstSeqNo=* m_seqNo, /*origin=* toOrigin.GetDestination (), /*lifeTime=* m_myRouteTimeout);
   Ptr<Packet> packet = Create<Packet> ();
   SocketIpTtlTag tag;
   tag.SetTtl (toOrigin.GetHop ());
@@ -937,11 +975,13 @@ RoutingProtocol::SendReply (RreqHeader const & rreqHeader, RoutingTableEntry con
   Ptr<Socket> socket = FindSocketWithInterfaceAddress (toOrigin.GetInterface ());
   NS_ASSERT (socket);
   socket->SendTo (packet, 0, InetSocketAddress (toOrigin.GetNextHop (), FLOODING_PORT));
+  */
 }
 
 void
 RoutingProtocol::SendReplyAck (Ipv4Address neighbor)
 {
+  /*
   NS_LOG_FUNCTION (this << " to " << neighbor);
   RrepAckHeader h;
   TypeHeader typeHeader (FLOODINGTYPE_RREP_ACK);
@@ -956,11 +996,13 @@ RoutingProtocol::SendReplyAck (Ipv4Address neighbor)
   Ptr<Socket> socket = FindSocketWithInterfaceAddress (toNeighbor.GetInterface ());
   NS_ASSERT (socket);
   socket->SendTo (packet, 0, InetSocketAddress (neighbor, FLOODING_PORT));
+  */
 }
 
 void
 RoutingProtocol::RecvReply (Ptr<Packet> p, Ipv4Address receiver, Ipv4Address sender)
 {
+  /*
   NS_LOG_FUNCTION (this << " src " << sender);
   RrepHeader rrepHeader;
   p->RemoveHeader (rrepHeader);
@@ -1002,11 +1044,13 @@ RoutingProtocol::RecvReply (Ptr<Packet> p, Ipv4Address receiver, Ipv4Address sen
   Ptr<Socket> socket = FindSocketWithInterfaceAddress (toOrigin.GetInterface ());
   NS_ASSERT (socket);
   socket->SendTo (packet, 0, InetSocketAddress (toOrigin.GetNextHop (), FLOODING_PORT));
+  */
 }
 
 void
 RoutingProtocol::RecvReplyAck (Ipv4Address neighbor)
 {
+  /*
   NS_LOG_FUNCTION (this);
   RoutingTableEntry rt;
   if (m_routingTable.LookupRoute (neighbor, rt))
@@ -1015,24 +1059,26 @@ RoutingProtocol::RecvReplyAck (Ipv4Address neighbor)
       rt.SetFlag (VALID);
       m_routingTable.Update (rt);
     }
+    */
 }
 
 void
 RoutingProtocol::SendHello ()
 {
+  /*
   NS_LOG_FUNCTION (this);
   /* Broadcast a RREP with TTL = 1 with the RREP message fields set as follows:
    *   Destination IP Address         The node's IP address.
    *   Destination Sequence Number    The node's latest sequence number.
    *   Hop Count                      0
    *   Lifetime                       AllowedHelloLoss * HelloInterval
-   */
+   *
   for (std::map<Ptr<Socket>, Ipv4InterfaceAddress>::const_iterator j = m_socketAddresses.begin (); j != m_socketAddresses.end (); ++j)
     {
       Ptr<Socket> socket = j->first;
       Ipv4InterfaceAddress iface = j->second;
-      RrepHeader helloHeader (/*prefix size=*/ 0, /*hops=*/ 0, /*dst=*/ iface.GetLocal (), /*dst seqno=*/ m_seqNo,
-                                               /*origin=*/ iface.GetLocal (),/*lifetime=*/ Time (m_allowedHelloLoss * m_helloInterval));
+      RrepHeader helloHeader (/*prefix size=* 0, /*hops=* 0, /*dst=* iface.GetLocal (), /*dst seqno=* m_seqNo,
+                                               /*origin=* iface.GetLocal (),/*lifetime=* Time (m_allowedHelloLoss * m_helloInterval));
       Ptr<Packet> packet = Create<Packet> ();
       SocketIpTtlTag tag;
       tag.SetTtl (1);
@@ -1053,11 +1099,13 @@ RoutingProtocol::SendHello ()
       Time jitter = Time (MilliSeconds (m_uniformRandomVariable->GetInteger (0, 10)));
       Simulator::Schedule (jitter, &RoutingProtocol::SendTo, this, socket, packet, destination);
     }
+    */
 }
 
 void
 RoutingProtocol::SendPacketFromQueue (Ipv4Address dst, Ptr<Ipv4Route> route)
 {
+  /*
   NS_LOG_FUNCTION (this);
   QueueEntry queueEntry;
   while (m_queue.Dequeue (dst, queueEntry))
@@ -1077,11 +1125,13 @@ RoutingProtocol::SendPacketFromQueue (Ipv4Address dst, Ptr<Ipv4Route> route)
       header.SetTtl (header.GetTtl () + 1); // compensate extra TTL decrement by fake loopback routing
       ucb (route, p, header);
     }
+    */
 }
 
 void
 RoutingProtocol::SendRerrWhenBreaksLinkToNextHop (Ipv4Address nextHop)
 {
+  /*
   NS_LOG_FUNCTION (this << nextHop);
   RerrHeader rerrHeader;
   std::vector<Ipv4Address> precursors;
@@ -1132,12 +1182,14 @@ RoutingProtocol::SendRerrWhenBreaksLinkToNextHop (Ipv4Address nextHop)
     }
   unreachable.insert (std::make_pair (nextHop, toNextHop.GetSeqNo ()));
   m_routingTable.InvalidateRoutesWithDst (unreachable);
+  */
 }
 
 void
 RoutingProtocol::SendRerrWhenNoRouteToForward (Ipv4Address dst,
                                                uint32_t dstSeqNo, Ipv4Address origin)
 {
+  /*
   NS_LOG_FUNCTION (this);
   // A node SHOULD NOT originate more than RERR_RATELIMIT RERR messages per second.
   if (m_rerrCount == m_rerrRateLimit)
@@ -1189,11 +1241,13 @@ RoutingProtocol::SendRerrWhenNoRouteToForward (Ipv4Address dst,
           socket->SendTo (packet->Copy (), 0, InetSocketAddress (destination, FLOODING_PORT));
         }
     }
+    */
 }
 
 void
 RoutingProtocol::SendRerrMessage (Ptr<Packet> packet, std::vector<Ipv4Address> precursors)
 {
+  /*
   NS_LOG_FUNCTION (this);
 
   if (precursors.empty ())
@@ -1258,11 +1312,13 @@ RoutingProtocol::SendRerrMessage (Ptr<Packet> packet, std::vector<Ipv4Address> p
         }
       Simulator::Schedule (Time (MilliSeconds (m_uniformRandomVariable->GetInteger (0, 10))), &RoutingProtocol::SendTo, this, socket, p, destination);
     }
+    */
 }
 
 Ptr<Socket>
 RoutingProtocol::FindSocketWithInterfaceAddress (Ipv4InterfaceAddress addr ) const
 {
+  /*
   NS_LOG_FUNCTION (this << addr);
   for (std::map<Ptr<Socket>, Ipv4InterfaceAddress>::const_iterator j =
          m_socketAddresses.begin (); j != m_socketAddresses.end (); ++j)
@@ -1275,12 +1331,14 @@ RoutingProtocol::FindSocketWithInterfaceAddress (Ipv4InterfaceAddress addr ) con
         }
     }
   Ptr<Socket> socket;
-  return socket;
+  */
+  return null;
 }
 
 Ptr<Socket>
 RoutingProtocol::FindSubnetBroadcastSocketWithInterfaceAddress (Ipv4InterfaceAddress addr ) const
 {
+  /*
   NS_LOG_FUNCTION (this << addr);
   for (std::map<Ptr<Socket>, Ipv4InterfaceAddress>::const_iterator j =
          m_socketSubnetBroadcastAddresses.begin (); j != m_socketSubnetBroadcastAddresses.end (); ++j)
@@ -1293,7 +1351,8 @@ RoutingProtocol::FindSubnetBroadcastSocketWithInterfaceAddress (Ipv4InterfaceAdd
         }
     }
   Ptr<Socket> socket;
-  return socket;
+  */
+  return null;
 }
 
 void
@@ -1301,13 +1360,10 @@ RoutingProtocol::DoInitialize (void)
 {
   NS_LOG_FUNCTION (this);
   uint32_t startTime;
-  if (m_enableHello)
-    {
-      m_htimer.SetFunction (&RoutingProtocol::HelloTimerExpire, this);
-      startTime = m_uniformRandomVariable->GetInteger (0, 100);
-      NS_LOG_DEBUG ("Starting at time " << startTime << "ms");
-      m_htimer.Schedule (MilliSeconds (startTime));
-    }
+  m_htimer.SetFunction (&RoutingProtocol::HelloTimerExpire, this);
+  startTime = m_uniformRandomVariable->GetInteger (0, 100);
+  NS_LOG_DEBUG ("Starting at time " << startTime << "ms");
+  m_htimer.Schedule (MilliSeconds (startTime));
   Ipv4RoutingProtocol::DoInitialize ();
 }
 

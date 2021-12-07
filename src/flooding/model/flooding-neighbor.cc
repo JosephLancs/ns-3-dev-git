@@ -175,21 +175,6 @@ Neighbors::LookupMacAddress (Ipv4Address addr)
   return hwaddr;
 }
 
-void
-Neighbors::ProcessTxError (WifiMacHeader const & hdr)
-{
-  Mac48Address addr = hdr.GetAddr1 ();
-
-  for (std::vector<Neighbor>::iterator i = m_nb.begin (); i != m_nb.end (); ++i)
-    {
-      if (i->m_hardwareAddress == addr)
-        {
-          i->close = true;
-        }
-    }
-  Purge ();
-}
-
 }  // namespace flooding
 }  // namespace ns3
 

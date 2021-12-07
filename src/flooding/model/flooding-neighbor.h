@@ -16,18 +16,18 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  * Based on
- *      NS-2 AODV model developed by the CMU/MONARCH group and optimized and
+ *      NS-2 FLOODING model developed by the CMU/MONARCH group and optimized and
  *      tuned by Samir Das and Mahesh Marina, University of Cincinnati;
  *
- *      AODV-UU implementation by Erik Nordström of Uppsala University
- *      http://core.it.uu.se/core/index.php/AODV-UU
+ *      FLOODING-UU implementation by Erik Nordström of Uppsala University
+ *      http://core.it.uu.se/core/index.php/FLOODING-UU
  *
  * Authors: Elena Buchatskaia <borovkovaes@iitp.ru>
  *          Pavel Boyko <boyko@iitp.ru>
  */
 
-#ifndef AODVNEIGHBOR_H
-#define AODVNEIGHBOR_H
+#ifndef FLOODINGNEIGHBOR_H
+#define FLOODINGNEIGHBOR_H
 
 #include <vector>
 #include "ns3/simulator.h"
@@ -40,12 +40,12 @@ namespace ns3 {
 
 class WifiMacHeader;
 
-namespace aodv {
+namespace flooding {
 
 class RoutingProtocol;
 
 /**
- * \ingroup aodv
+ * \ingroup FLOODING
  * \brief maintain list of active neighbors
  */
 class Neighbors
@@ -170,7 +170,7 @@ private:
   void ProcessTxError (WifiMacHeader const &);
 };
 
-}  // namespace aodv
+}  // namespace FLOODING
 }  // namespace ns3
 
-#endif /* AODVNEIGHBOR_H */
+#endif /* FLOODINGNEIGHBOR_H */

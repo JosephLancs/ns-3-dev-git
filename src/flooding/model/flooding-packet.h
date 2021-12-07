@@ -16,17 +16,17 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  * Based on
- *      NS-2 AODV model developed by the CMU/MONARCH group and optimized and
+ *      NS-2 Flooding model developed by the CMU/MONARCH group and optimized and
  *      tuned by Samir Das and Mahesh Marina, University of Cincinnati;
  *
- *      AODV-UU implementation by Erik Nordström of Uppsala University
- *      http://core.it.uu.se/core/index.php/AODV-UU
+ *      Flooding-UU implementation by Erik Nordström of Uppsala University
+ *      http://core.it.uu.se/core/index.php/Flooding-UU
  *
  * Authors: Elena Buchatskaia <borovkovaes@iitp.ru>
  *          Pavel Boyko <boyko@iitp.ru>
  */
-#ifndef AODVPACKET_H
-#define AODVPACKET_H
+#ifndef FLOODINGPACKET_H
+#define FLOODINGPACKET_H
 
 #include <iostream>
 #include "ns3/header.h"
@@ -36,32 +36,32 @@
 #include "ns3/nstime.h"
 
 namespace ns3 {
-namespace aodv {
+namespace flooding {
 
 /**
-* \ingroup aodv
+* \ingroup FLOODING
 * \brief MessageType enumeration
 */
 enum MessageType
 {
-  AODVTYPE_RREQ  = 1,   //!< AODVTYPE_RREQ
-  AODVTYPE_RREP  = 2,   //!< AODVTYPE_RREP
-  AODVTYPE_RERR  = 3,   //!< AODVTYPE_RERR
-  AODVTYPE_RREP_ACK = 4 //!< AODVTYPE_RREP_ACK
+  FLOODINGTYPE_RREQ  = 1,   //!< FLOODINGTYPE_RREQ
+  FLOODINGTYPE_RREP  = 2,   //!< FLOODINGTYPE_RREP
+  FLOODINGTYPE_RERR  = 3,   //!< FLOODINGTYPE_RERR
+  FLOODINGTYPE_RREP_ACK = 4 //!< FLOODINGTYPE_RREP_ACK
 };
 
 /**
-* \ingroup aodv
-* \brief AODV types
+* \ingroup FLOODING
+* \brief FLOODING types
 */
 class TypeHeader : public Header
 {
 public:
   /**
    * constructor
-   * \param t the AODV RREQ type
+   * \param t the FLOODING RREQ type
    */
-  TypeHeader (MessageType t = AODVTYPE_RREQ);
+  TypeHeader (MessageType t = FLOODINGTYPE_RREQ);
 
   /**
    * \brief Get the type ID.
@@ -108,7 +108,7 @@ private:
 std::ostream & operator<< (std::ostream & os, TypeHeader const & h);
 
 /**
-* \ingroup aodv
+* \ingroup FLOODING
 * \brief   Route Request (RREQ) Message Format
   \verbatim
   0                   1                   2                   3
@@ -314,7 +314,7 @@ private:
 std::ostream & operator<< (std::ostream & os, RreqHeader const &);
 
 /**
-* \ingroup aodv
+* \ingroup FLOODING
 * \brief Route Reply (RREP) Message Format
   \verbatim
   0                   1                   2                   3
@@ -490,7 +490,7 @@ private:
 std::ostream & operator<< (std::ostream & os, RrepHeader const &);
 
 /**
-* \ingroup aodv
+* \ingroup FLOODING
 * \brief Route Reply Acknowledgment (RREP-ACK) Message Format
   \verbatim
   0                   1
@@ -536,7 +536,7 @@ std::ostream & operator<< (std::ostream & os, RrepAckHeader const &);
 
 
 /**
-* \ingroup aodv
+* \ingroup FLOODING
 * \brief Route Error (RERR) Message Format
   \verbatim
   0                   1                   2                   3
@@ -627,7 +627,7 @@ private:
   */
 std::ostream & operator<< (std::ostream & os, RerrHeader const &);
 
-}  // namespace aodv
+}  // namespace FLOODING
 }  // namespace ns3
 
-#endif /* AODVPACKET_H */
+#endif /* FLOODINGPACKET_H */

@@ -16,20 +16,20 @@
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
  * Based on
- *      NS-2 AODV model developed by the CMU/MONARCH group and optimized and
+ *      NS-2 flooding model developed by the CMU/MONARCH group and optimized and
  *      tuned by Samir Das and Mahesh Marina, University of Cincinnati;
  *
- *      AODV-UU implementation by Erik Nordström of Uppsala University
- *      http://core.it.uu.se/core/index.php/AODV-UU
+ *      flooding-UU implementation by Erik Nordström of Uppsala University
+ *      http://core.it.uu.se/core/index.php/flooding-UU
  *
  * Authors: Elena Buchatskaia <borovkovaes@iitp.ru>
  *          Pavel Boyko <boyko@iitp.ru>
  */
-#ifndef AODVROUTINGPROTOCOL_H
-#define AODVROUTINGPROTOCOL_H
+#ifndef FLOODINGROUTINGPROTOCOL_H
+#define FLOODINGROUTINGPROTOCOL_H
 
-#include "aodv-packet.h"
-#include "aodv-neighbor.h"
+#include "flooding-packet.h"
+#include "flooding-neighbor.h"
 #include "ns3/node.h"
 #include "ns3/random-variable-stream.h"
 #include "ns3/output-stream-wrapper.h"
@@ -39,11 +39,11 @@
 #include <map>
 
 namespace ns3 {
-namespace aodv {
+namespace flooding {
 /**
- * \ingroup aodv
+ * \ingroup flooding
  *
- * \brief AODV routing protocol
+ * \brief flooding routing protocol
  */
 class RoutingProtocol : public Ipv4RoutingProtocol
 {
@@ -53,7 +53,7 @@ public:
    * \return the object TypeId
    */
   static TypeId GetTypeId (void);
-  static const uint32_t AODV_PORT;
+  static const uint32_t FLOODING_PORT;
 
   /// constructor
   RoutingProtocol ();
@@ -324,7 +324,7 @@ private:
   ///\name Receive control packets
   //\{
   /// Receive and process control packet
-  void RecvAodv (Ptr<Socket> socket);
+  void RecvFlooding (Ptr<Socket> socket);
   /// Receive RREQ
   void RecvRequest (Ptr<Packet> p, Ipv4Address receiver, Ipv4Address src);
   /// Receive RREP
@@ -407,7 +407,7 @@ private:
   Time m_lastBcastTime;
 };
 
-} //namespace aodv
+} //namespace flooding
 } //namespace ns3
 
-#endif /* AODVROUTINGPROTOCOL_H */
+#endif /* floodingROUTINGPROTOCOL_H */
