@@ -300,7 +300,7 @@ RoutingProtocol::Start ()
   NS_LOG_FUNCTION (this);
   if (m_enableHello)
     {
-      m_nb.ScheduleTimer ();
+      //m_nb.ScheduleTimer ();
     }
   m_rreqRateLimitTimer.SetFunction (&RoutingProtocol::RreqRateLimitTimerExpire,
                                     this);
@@ -1358,6 +1358,32 @@ RoutingProtocol::FindSubnetBroadcastSocketWithInterfaceAddress (Ipv4InterfaceAdd
   return socket;
 }
 
+void
+RoutingProtocol::HelloTimerExpire ()
+{
+}
+
+void
+RoutingProtocol::RerrRateLimitTimerExpire ()
+{
+  NS_LOG_FUNCTION (this);
+  m_rerrCount = 0;
+  m_rerrRateLimitTimer.Schedule (Seconds (1));
+}
+int64_t
+RoutingProtocol::AssignStreams (int64_t stream)
+{
+  NS_LOG_FUNCTION (this << stream);
+  m_uniformRandomVariable->SetStream (stream);
+  return 1;
+}
+void
+RoutingProtocol::RreqRateLimitTimerExpire ()
+{
+  NS_LOG_FUNCTION (this);
+  m_rreqCount = 0;
+  m_rreqRateLimitTimer.Schedule (Seconds (1));
+}
 void
 RoutingProtocol::DoInitialize (void)
 {

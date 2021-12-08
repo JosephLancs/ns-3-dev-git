@@ -29,7 +29,8 @@
 #define FLOODINGROUTINGPROTOCOL_H
 
 #include "flooding-packet.h"
-#include "flooding-neighbor.h"
+//#include "flooding-neighbor.h"
+#include "ns3/timer.h"
 #include "ns3/node.h"
 #include "ns3/random-variable-stream.h"
 #include "ns3/output-stream-wrapper.h"
@@ -66,11 +67,11 @@ public:
                    UnicastForwardCallback ucb, MulticastForwardCallback mcb,
                    LocalDeliverCallback lcb, ErrorCallback ecb);
   virtual void NotifyInterfaceUp (uint32_t interface);
-  virtual void NotifyInterfaceDown (uint32_t interface);
-  virtual void NotifyAddAddress (uint32_t interface, Ipv4InterfaceAddress address);
-  virtual void NotifyRemoveAddress (uint32_t interface, Ipv4InterfaceAddress address);
+  //virtual void NotifyInterfaceDown (uint32_t interface);
+  //virtual void NotifyAddAddress (uint32_t interface, Ipv4InterfaceAddress address);
+  //virtual void NotifyRemoveAddress (uint32_t interface, Ipv4InterfaceAddress address);
   virtual void SetIpv4 (Ptr<Ipv4> ipv4);
-  virtual void PrintRoutingTable (Ptr<OutputStreamWrapper> stream, Time::Unit unit = Time::S) const;
+  //virtual void PrintRoutingTable (Ptr<OutputStreamWrapper> stream, Time::Unit unit = Time::S) const;
 
   // Handle protocol parameters
   /**
@@ -238,7 +239,7 @@ private:
   /// Handle duplicated broadcast/multicast packets
   //DuplicatePacketDetection m_dpd;
   /// Handle neighbors
-  Neighbors m_nb;
+  //Neighbors m_nb;
   /// Number of RREQs used for RREQ rate control
   uint16_t m_rreqCount;
   /// Number of RERRs used for RERR rate control
