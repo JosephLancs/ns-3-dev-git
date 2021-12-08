@@ -67,103 +67,13 @@ public:
                    UnicastForwardCallback ucb, MulticastForwardCallback mcb,
                    LocalDeliverCallback lcb, ErrorCallback ecb);
   virtual void NotifyInterfaceUp (uint32_t interface);
-  //virtual void NotifyInterfaceDown (uint32_t interface);
-  //virtual void NotifyAddAddress (uint32_t interface, Ipv4InterfaceAddress address);
-  //virtual void NotifyRemoveAddress (uint32_t interface, Ipv4InterfaceAddress address);
+  virtual void NotifyInterfaceDown (uint32_t interface);
+  virtual void NotifyAddAddress (uint32_t interface, Ipv4InterfaceAddress address);
+  virtual void NotifyRemoveAddress (uint32_t interface, Ipv4InterfaceAddress address);
   virtual void SetIpv4 (Ptr<Ipv4> ipv4);
-  //virtual void PrintRoutingTable (Ptr<OutputStreamWrapper> stream, Time::Unit unit = Time::S) const;
+  virtual void PrintRoutingTable (Ptr<OutputStreamWrapper> stream, Time::Unit unit = Time::S) const;
 
-  // Handle protocol parameters
-  /**
-   * Get maximum queue time
-   * \returns the maximum queue time
-   */
-  Time GetMaxQueueTime () const
-  {
-    return m_maxQueueTime;
-  }
-  /**
-   * Set the maximum queue time
-   * \param t the maximum queue time
-   */
-  void SetMaxQueueTime (Time t);
-  /**
-   * Get the maximum queue length
-   * \returns the maximum queue length
-   */
-  uint32_t GetMaxQueueLen () const
-  {
-    return m_maxQueueLen;
-  }
-  /**
-   * Set the maximum queue length
-   * \param len the maximum queue length
-   */
-  void SetMaxQueueLen (uint32_t len);
-  /**
-   * Get destination only flag
-   * \returns the destination only flag
-   */
-  bool GetDestinationOnlyFlag () const
-  {
-    return m_destinationOnly;
-  }
-  /**
-   * Set destination only flag
-   * \param f the destination only flag
-   */
-  void SetDestinationOnlyFlag (bool f)
-  {
-    m_destinationOnly = f;
-  }
-  /**
-   * Get gratuitous reply flag
-   * \returns the gratuitous reply flag
-   */
-  bool GetGratuitousReplyFlag () const
-  {
-    return m_gratuitousReply;
-  }
-  /**
-   * Set gratuitous reply flag
-   * \param f the gratuitous reply flag
-   */
-  void SetGratuitousReplyFlag (bool f)
-  {
-    m_gratuitousReply = f;
-  }
-  /**
-   * Set hello enable
-   * \param f the hello enable flag
-   */
-  void SetHelloEnable (bool f)
-  {
-    m_enableHello = f;
-  }
-  /**
-   * Get hello enable flag
-   * \returns the enable hello flag
-   */
-  bool GetHelloEnable () const
-  {
-    return m_enableHello;
-  }
-  /**
-   * Set broadcast enable flag
-   * \param f enable broadcast flag
-   */
-  void SetBroadcastEnable (bool f)
-  {
-    m_enableBroadcast = f;
-  }
-  /**
-   * Get broadcast enable flag
-   * \returns the broadcast enable flag
-   */
-  bool GetBroadcastEnable () const
-  {
-    return m_enableBroadcast;
-  }
+  
 
   /**
    * Assign a fixed random variable stream number to the random variables
@@ -179,42 +89,6 @@ protected:
   virtual void DoInitialize (void);
 private:
   // Protocol parameters.
-  uint32_t m_rreqRetries;             ///< Maximum number of retransmissions of RREQ with TTL = NetDiameter to discover a route
-  uint16_t m_ttlStart;                ///< Initial TTL value for RREQ.
-  uint16_t m_ttlIncrement;            ///< TTL increment for each attempt using the expanding ring search for RREQ dissemination.
-  uint16_t m_ttlThreshold;            ///< Maximum TTL value for expanding ring search, TTL = NetDiameter is used beyond this value.
-  uint16_t m_timeoutBuffer;           ///< Provide a buffer for the timeout.
-  uint16_t m_rreqRateLimit;           ///< Maximum number of RREQ per second.
-  uint16_t m_rerrRateLimit;           ///< Maximum number of REER per second.
-  Time m_activeRouteTimeout;          ///< Period of time during which the route is considered to be valid.
-  uint32_t m_netDiameter;             ///< Net diameter measures the maximum possible number of hops between two nodes in the network
-  /**
-   *  NodeTraversalTime is a conservative estimate of the average one hop traversal time for packets
-   *  and should include queuing delays, interrupt processing times and transfer times.
-   */
-  Time m_nodeTraversalTime;
-  Time m_netTraversalTime;             ///< Estimate of the average net traversal time.
-  Time m_pathDiscoveryTime;            ///< Estimate of maximum time needed to find route in network.
-  Time m_myRouteTimeout;               ///< Value of lifetime field in RREP generating by this node.
-  /**
-   * Every HelloInterval the node checks whether it has sent a broadcast  within the last HelloInterval.
-   * If it has not, it MAY broadcast a  Hello message
-   */
-  Time m_helloInterval;
-  uint32_t m_allowedHelloLoss;         ///< Number of hello messages which may be loss for valid link
-  /**
-   * DeletePeriod is intended to provide an upper bound on the time for which an upstream node A
-   * can have a neighbor B as an active next hop for destination D, while B has invalidated the route to D.
-   */
-  Time m_deletePeriod;
-  Time m_nextHopWait;                  ///< Period of our waiting for the neighbour's RREP_ACK
-  Time m_blackListTimeout;             ///< Time for which the node is put into the blacklist
-  uint32_t m_maxQueueLen;              ///< The maximum number of packets that we allow a routing protocol to buffer.
-  Time m_maxQueueTime;                 ///< The maximum period of time that a routing protocol is allowed to buffer a packet for.
-  bool m_destinationOnly;              ///< Indicates only the destination may respond to this RREQ.
-  bool m_gratuitousReply;              ///< Indicates whether a gratuitous RREP should be unicast to the node originated route discovery.
-  bool m_enableHello;                  ///< Indicates whether a hello messages enable
-  bool m_enableBroadcast;              ///< Indicates whether a a broadcast data packets forwarding enable
   //\}
 
   /// IP protocol
@@ -326,22 +200,12 @@ private:
   //\{
   /// Receive and process control packet
   void RecvFlooding (Ptr<Socket> socket);
-  /// Receive RREQ
-  void RecvRequest (Ptr<Packet> p, Ipv4Address receiver, Ipv4Address src);
-  /// Receive RREP
-  void RecvReply (Ptr<Packet> p, Ipv4Address my,Ipv4Address src);
-  /// Receive RREP_ACK
-  void RecvReplyAck (Ipv4Address neighbor);
-  /// Receive RERR from node with address src
-  void RecvError (Ptr<Packet> p, Ipv4Address src);
+
+
   //\}
 
   ///\name Send
   //\{
-  /// Forward packet from route request queue
-  void SendPacketFromQueue (Ipv4Address dst, Ptr<Ipv4Route> route);
-  /// Send hello
-  void SendHello ();
   /// Send RREQ
   void SendRequest (Ipv4Address dst);
   /// Send RREP
@@ -353,18 +217,7 @@ private:
    *
   void SendReplyByIntermediateNode (RoutingTableEntry & toDst, RoutingTableEntry & toOrigin, bool gratRep);*/
   /// Send RREP_ACK
-  void SendReplyAck (Ipv4Address neighbor);
-  /// Initiate RERR
-  void SendRerrWhenBreaksLinkToNextHop (Ipv4Address nextHop);
-  /// Forward RERR
-  void SendRerrMessage (Ptr<Packet> packet,  std::vector<Ipv4Address> precursors);
-  /**
-   * Send RERR message when no route to forward input packet. Unicast if there is reverse route to originating node, broadcast otherwise.
-   * \param dst - destination node IP address
-   * \param dstSeqNo - destination node sequence number
-   * \param origin - originating node IP address
-   */
-  void SendRerrWhenNoRouteToForward (Ipv4Address dst, uint32_t dstSeqNo, Ipv4Address origin);
+
   /// @}
 
   /**
@@ -375,18 +228,8 @@ private:
    */
   void SendTo (Ptr<Socket> socket, Ptr<Packet> packet, Ipv4Address destination);
 
-  /// Hello timer
-  Timer m_htimer;
-  /// Schedule next send of hello message
-  void HelloTimerExpire ();
-  /// RREQ rate limit timer
-  Timer m_rreqRateLimitTimer;
-  /// Reset RREQ count and schedule RREQ rate limit timer with delay 1 sec.
-  void RreqRateLimitTimerExpire ();
-  /// RERR rate limit timer
-  Timer m_rerrRateLimitTimer;
+
   /// Reset RERR count and schedule RERR rate limit timer with delay 1 sec.
-  void RerrRateLimitTimerExpire ();
   /// Map IP address + RREQ timer.
   std::map<Ipv4Address, Timer> m_addressReqTimer;
   /**

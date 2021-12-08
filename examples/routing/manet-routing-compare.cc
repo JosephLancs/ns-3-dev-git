@@ -72,6 +72,7 @@
 #include "ns3/internet-module.h"
 #include "ns3/mobility-module.h"
 #include "ns3/aodv-module.h"
+#include "ns3/flooding-module.h"
 #include "ns3/olsr-module.h"
 #include "ns3/dsdv-module.h"
 #include "ns3/dsr-module.h"
@@ -295,6 +296,7 @@ RoutingExperiment::Run (int nSinks, double txp, std::string CSVfileName)
   OlsrHelper olsr;
   DsdvHelper dsdv;
   DsrHelper dsr;
+  FloodingHelper flood;
   DsrMainHelper dsrMain;
   Ipv4ListRoutingHelper list;
   InternetStackHelper internet;
@@ -313,19 +315,23 @@ RoutingExperiment::Run (int nSinks, double txp, std::string CSVfileName)
       list.Add (dsdv, 100);
       m_protocolName = "DSDV";
       break;
-    case 4:
+    case 5:
       m_protocolName = "DSR";
+      break;
+    case 4:
+      m_protocolName = "FLOODING";
+      list.Add(flood, 100);
       break;
     default:
       NS_FATAL_ERROR ("No such protocol:" << m_protocol);
     }
 
-  if (m_protocol < 4)
+  if (m_protocol < 5)
     {
       internet.SetRoutingHelper (list);
       internet.Install (adhocNodes);
     }
-  else if (m_protocol == 4)
+  else if (m_protocol == 5)
     {
       internet.Install (adhocNodes);
       dsrMain.Install (dsr, adhocNodes);
