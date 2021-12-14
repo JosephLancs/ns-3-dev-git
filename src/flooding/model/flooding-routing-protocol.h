@@ -29,7 +29,6 @@
 #define FLOODINGROUTINGPROTOCOL_H
 
 #include "flooding-packet.h"
-//#include "flooding-neighbor.h"
 #include "ns3/timer.h"
 #include "ns3/node.h"
 #include "ns3/random-variable-stream.h"
@@ -186,7 +185,7 @@ private:
    * \param rrepHeader RREP message header
    * \param receiverIfaceAddr receiver interface IP address
    */
-  void ProcessHello (RrepHeader const & rrepHeader, Ipv4Address receiverIfaceAddr);
+  void ProcessHello (RreqHeader const & rrepHeader, Ipv4Address receiverIfaceAddr);
   /**
    * Create loopback route for given header
    *

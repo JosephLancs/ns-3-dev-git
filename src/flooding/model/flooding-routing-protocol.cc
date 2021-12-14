@@ -684,13 +684,15 @@ RoutingProtocol::RecvFlooding (Ptr<Socket> socket)
     }
   NS_LOG_DEBUG ("flooding node " << this << " received a flooding packet from " << sender << " to " << receiver);
 
-  TypeHeader tHeader (FLOODINGTYPE_RREQ);
+  TypeHeader tHeader (FLOODINGTYPE_FLOODING);
   packet->RemoveHeader (tHeader);
   if (!tHeader.IsValid ())
     {
       NS_LOG_DEBUG ("flooding message " << packet->GetUid () << " with unknown type received: " << tHeader.Get () << ". Drop");
       return; // drop
     }
+
+
   //todo: implement flooding forwarding here
     
 }

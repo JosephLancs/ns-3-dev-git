@@ -75,7 +75,7 @@ TypeHeader::Deserialize (Buffer::Iterator start)
   Buffer::Iterator i = start;
   uint8_t type = i.ReadU8 ();
   m_valid = true;
-  switch (type)
+  /*switch (type)
     {
     case FLOODINGTYPE_RREQ:
     case FLOODINGTYPE_RREP:
@@ -87,7 +87,8 @@ TypeHeader::Deserialize (Buffer::Iterator start)
       }
     default:
       m_valid = false;
-    }
+    }*/
+    m_type = (MessageType) type;
   uint32_t dist = i.GetDistanceFrom (start);
   NS_ASSERT (dist == GetSerializedSize ());
   return dist;
@@ -272,7 +273,7 @@ RreqHeader::operator== (RreqHeader const & o) const
 // RREP
 //-----------------------------------------------------------------------------
 
-RrepHeader::RrepHeader (uint8_t prefixSize, uint8_t hopCount, Ipv4Address dst,
+/*RrepHeader::RrepHeader (uint8_t prefixSize, uint8_t hopCount, Ipv4Address dst,
                         uint32_t dstSeqNo, Ipv4Address origin, Time lifeTime)
   : m_flags (0),
     m_prefixSize (prefixSize),
@@ -394,6 +395,7 @@ RrepHeader::GetPrefixSize () const
 {
   return m_prefixSize;
 }
+   void ProcessHello (RrepHeader const & rrepHeader, Ipv4Address receiverIfaceAddr);
 
 bool
 RrepHeader::operator== (RrepHeader const & o) const
@@ -653,6 +655,6 @@ operator<< (std::ostream & os, RerrHeader const & h )
 {
   h.Print (os);
   return os;
-}
+}*/
 }
 }
