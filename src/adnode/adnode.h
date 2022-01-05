@@ -23,7 +23,12 @@ namespace ns3
 
             void PromiscRx(Ptr<const Packet> packet, uint16_t channelFreq, WifiTxVector tx, MpduInfo mpdu, SignalNoiseDbm sn);
 
-            
+            void SetBroadcastInterval(Time interval);
+
+            private:
+                Time m_broadcast_time;
+                uint32_t m_packetSize;
+                //Ptr<NetDevice> m_netDevice;
 
 
     }
