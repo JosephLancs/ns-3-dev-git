@@ -15,14 +15,14 @@
  * along with this program; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  *
- * This is an example script for AODV manet routing protocol. 
+ * This is an example script for flooding manet routing protocol. 
  *
  * Authors: Pavel Boyko <boyko@iitp.ru>
  */
 
 #include <iostream>
 #include <cmath>
-#include "ns3/aodv-module.h"
+#include "ns3/flooding-module.h"
 #include "ns3/core-module.h"
 #include "ns3/network-module.h"
 #include "ns3/internet-module.h"
@@ -34,7 +34,7 @@
 using namespace ns3;
 
 /**
- * \ingroup aodv-examples
+ * \ingroup flooding-examples
  * \ingroup examples
  * \brief Test script.
  * 
@@ -49,10 +49,10 @@ using namespace ns3;
  * only 34 of 100 pings being received.  If the step size is reduced
  * to cover the gap, then all pings can be received.
  */
-class AodvExample 
+class FloodingExample 
 {
 public:
-  AodvExample ();
+  FloodingExample ();
   /**
    * \brief Configure script parameters
    * \param argc is the command line argument count
@@ -103,7 +103,7 @@ private:
 
 int main (int argc, char **argv)
 {
-  AodvExample test;
+  FloodingExample test;
   if (!test.Configure (argc, argv))
     NS_FATAL_ERROR ("Configuration failed. Aborted.");
 
@@ -113,7 +113,7 @@ int main (int argc, char **argv)
 }
 
 //-----------------------------------------------------------------------------
-AodvExample::AodvExample () :
+FloodingExample::FloodingExample () :
   size (10),
   step (50),
   totalTime (100),
@@ -123,10 +123,10 @@ AodvExample::AodvExample () :
 }
 
 bool
-AodvExample::Configure (int argc, char **argv)
+FloodingExample::Configure (int argc, char **argv)
 {
-  // Enable AODV logs by default. Comment this if too noisy
-  // LogComponentEnable("AodvRoutingProtocol", LOG_LEVEL_ALL);
+  // Enable flooding logs by default. Comment this if too noisy
+  // LogComponentEnable("FloodingRoutingProtocol", LOG_LEVEL_ALL);
 
   SeedManager::SetSeed (12345);
   CommandLine cmd;
@@ -142,7 +142,7 @@ AodvExample::Configure (int argc, char **argv)
 }
 
 void
-AodvExample::Run ()
+FloodingExample::Run ()
 {
 //  Config::SetDefault ("ns3::WifiRemoteStationManager::RtsCtsThreshold", UintegerValue (1)); // enable rts cts all the time.
   CreateNodes ();
@@ -158,12 +158,12 @@ AodvExample::Run ()
 }
 
 void
-AodvExample::Report (std::ostream &)
+FloodingExample::Report (std::ostream &)
 { 
 }
 
 void
-AodvExample::CreateNodes ()
+FloodingExample::CreateNodes ()
 {
   std::cout << "Creating " << (unsigned)size << " nodes " << step << " m apart.\n";
   nodes.Create (size);
@@ -188,7 +188,7 @@ AodvExample::CreateNodes ()
 }
 
 void
-AodvExample::CreateDevices ()
+FloodingExample::CreateDevices ()
 {
   WifiMacHelper wifiMac;
   wifiMac.SetType ("ns3::AdhocWifiMac");
@@ -201,17 +201,17 @@ AodvExample::CreateDevices ()
 
   if (pcap)
     {
-      wifiPhy.EnablePcapAll (std::string ("aodv"));
+      wifiPhy.EnablePcapAll (std::string ("flooding"));
     }
 }
 
 void
-AodvExample::InstallInternetStack ()
+FloodingExample::InstallInternetStack ()
 {
-  AodvHelper aodv;
-  // you can configure AODV attributes here using aodv.Set(name, value)
+  FloodingHelper flooding;
+  // you can configure flooding attributes here using flooding.Set(name, value)
   InternetStackHelper stack;
-  stack.SetRoutingHelper (aodv); // has effect on the next Install ()
+  stack.SetRoutingHelper (flooding); // has effect on the next Install ()
   stack.Install (nodes);
   Ipv4AddressHelper address;
   address.SetBase ("10.0.0.0", "255.0.0.0");
@@ -219,13 +219,13 @@ AodvExample::InstallInternetStack ()
 
   if (printRoutes)
     {
-      Ptr<OutputStreamWrapper> routingStream = Create<OutputStreamWrapper> ("aodv.routes", std::ios::out);
-      aodv.PrintRoutingTableAllAt (Seconds (8), routingStream);
+      Ptr<OutputStreamWrapper> routingStream = Create<OutputStreamWrapper> ("flooding.routes", std::ios::out);
+      flooding.PrintRoutingTableAllAt (Seconds (8), routingStream);
     }
 }
 
 void
-AodvExample::InstallApplications ()
+FloodingExample::InstallApplications ()
 {
   V4PingHelper ping (interfaces.GetAddress (size - 1));
   ping.SetAttribute ("Verbose", BooleanValue (true));

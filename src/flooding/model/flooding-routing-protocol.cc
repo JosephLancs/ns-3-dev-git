@@ -168,6 +168,40 @@ RoutingProtocol::RouteOutput (Ptr<Packet> p, const Ipv4Header &header,
 {
   
   NS_LOG_FUNCTION (this << header << (oif ? oif->GetIfIndex () : 0));
+
+  //NS_LOG_WARN("Log" << ipv4Route);
+  Ptr<Ipv4Route> ipv4Route;
+  uint32_t iif = (oif ? m_ipv4->GetInterfaceForDevice (oif) : -1);
+
+  Ptr<Ipv4L3Protocol> l3 = m_ipv4->GetObject<Ipv4L3Protocol> ();
+  if (l3->GetNAddresses (iif) > 1)
+  {
+    NS_LOG_WARN ("flooding does not work with more then one address per each interface.");
+  }
+  Ipv4InterfaceAddress iface = l3->GetAddress (iif, 0);
+  if (iface.GetLocal () == Ipv4Address ("127.0.0.1"))
+  {
+    NS_LOG_WARN("Log2" << ipv4Route);
+
+    return ipv4Route;
+  }
+
+
+  ipv4Route = Create<Ipv4Route> ();
+  ipv4Route->SetDestination (header.GetDestination());
+  ipv4Route->SetGateway (iface.GetBroadcast());
+  ipv4Route->SetSource (iface.GetLocal());
+  ipv4Route->SetOutputDevice (oif);
+  sockerr = Socket::ERROR_NOTERROR;
+  NS_LOG_WARN("Log" << ipv4Route);
+  return ipv4Route;
+
+  
+  
+  //if(!(header.GetDestination == header.GetSource()))
+  //{
+    //oif->Send(p, header.GetDestination(), 0);
+  //}
   /*
   if (!p)
     {
@@ -181,7 +215,7 @@ RoutingProtocol::RouteOutput (Ptr<Packet> p, const Ipv4Header &header,
       Ptr<Ipv4Route> route;
       return route;
     }
-  sockerr = Socket::ERROR_NOTERROR;
+  
   Ptr<Ipv4Route> route;
   Ipv4Address dst = header.GetDestination ();
   RoutingTableEntry rt;
@@ -213,7 +247,6 @@ RoutingProtocol::RouteOutput (Ptr<Packet> p, const Ipv4Header &header,
     }
   return LoopbackRoute (header, oif);
   */
-  return NULL;
 }
 
 void
