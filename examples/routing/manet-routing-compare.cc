@@ -319,6 +319,7 @@ RoutingExperiment::Run (int nSinks, double txp, std::string CSVfileName)
       m_protocolName = "DSR";
       break;
     case 4:
+      NS_LOG_INFO("FLOODING ROUTING");
       m_protocolName = "FLOODING";
       list.Add(flood, 100);
       break;
