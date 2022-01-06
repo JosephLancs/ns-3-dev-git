@@ -6,7 +6,6 @@ def build(bld):
     module.source = [
         'model/flooding-id-cache.cc',
         'model/flooding-dpd.cc',
-        'model/flooding-packet.cc',
         'model/flooding-routing-protocol.cc',
         'helper/flooding-helper.cc',
         ]
@@ -17,7 +16,6 @@ def build(bld):
     headers.source = [
         'model/flooding-id-cache.h',
         'model/flooding-dpd.h',
-        'model/flooding-packet.h',
         'model/flooding-routing-protocol.h',
         'helper/flooding-helper.h',
         ]

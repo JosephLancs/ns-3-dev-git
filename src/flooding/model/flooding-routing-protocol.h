@@ -28,7 +28,6 @@
 #ifndef FLOODINGROUTINGPROTOCOL_H
 #define FLOODINGROUTINGPROTOCOL_H
 
-#include "flooding-packet.h"
 #include "flooding-dpd.h"
 #include "ns3/timer.h"
 #include "ns3/node.h"
