@@ -96,7 +96,7 @@ public:
   std::string GetCSVFileName () const { return m_CSVfileName; }
 
 private:
-  Ptr<Socket> SetupPacketReceive (Ipv4Address addr, Ptr<Node> node);
+  void SetupPacketReceive (InetSocketAddress addr, Ptr<Node> node);
   void ReceivePacket (Ptr<Socket> socket);
   void CheckThroughput ();
 
@@ -111,18 +111,26 @@ private:
   double m_txp;
   bool m_traceMobility;
   uint32_t m_protocol;
+  Time m_total_time;
+  Time m_send_start;
+
+private:
+  std::vector<Ptr<Socket>> m_sinks;
 };
 
 RoutingExperiment::RoutingExperiment ()
-  : port (9),
+  : port (9), // Discard port (RFC 863)
     bytesTotal (0),
     packetsReceived (0),
     m_CSVfileName ("manet-routing.output.csv"),
     m_nSinks (1),
     m_nNodes (100),
+    m_protocolName(""),
     m_txp (7.5),
     m_traceMobility (false),
-    m_protocol (2) // AODV
+    m_protocol (2), // AODV
+    m_total_time (Seconds (200.0)),
+    m_send_start (Seconds (100.0))
 {
 }
 
@@ -180,16 +188,17 @@ RoutingExperiment::CheckThroughput ()
   Simulator::Schedule (Seconds (1.0), &RoutingExperiment::CheckThroughput, this);
 }
 
-Ptr<Socket>
-RoutingExperiment::SetupPacketReceive (Ipv4Address addr, Ptr<Node> node)
+void
+RoutingExperiment::SetupPacketReceive (InetSocketAddress addr, Ptr<Node> node)
 {
   TypeId tid = TypeId::LookupByName ("ns3::UdpSocketFactory");
   Ptr<Socket> sink = Socket::CreateSocket (node, tid);
-  InetSocketAddress local = InetSocketAddress (addr, port);
-  sink->Bind (local);
+  sink->Bind (addr);
   sink->SetRecvCallback (MakeCallback (&RoutingExperiment::ReceivePacket, this));
 
-  return sink;
+  NS_LOG_DEBUG("Bound receive to " << addr);
+
+  m_sinks.push_back(sink);
 }
 
 void
@@ -202,6 +211,8 @@ RoutingExperiment::CommandSetup (int argc, char **argv)
   cmd.AddValue ("sinks", "The number of sinks", m_nSinks);
   cmd.AddValue ("nodes", "The number of nodes", m_nNodes);
   cmd.AddValue ("transmit-power", "The transmit power (default: 7.5)", m_txp);
+  cmd.AddValue ("total-time", "The total simulation time (default: 200)", m_total_time);
+  cmd.AddValue ("send-start", "The time at which packets will start sending (default: 100)", m_send_start);
   cmd.Parse (argc, argv);
 }
 
@@ -231,19 +242,18 @@ RoutingExperiment::Run ()
 {
   Packet::EnablePrinting ();
 
-  double TotalTime = 200.0;
   std::string rate ("2048bps");
+  uint32_t packet_size (64);
   std::string phyMode ("DsssRate11Mbps");
   std::string tr_name ("manet-routing-compare");
   int nodeSpeed = 20; //in m/s
   int nodePause = 0; //in s
-  m_protocolName = "protocol";
 
-  Config::SetDefault  ("ns3::OnOffApplication::PacketSize",StringValue ("64"));
+  Config::SetDefault ("ns3::OnOffApplication::PacketSize", UintegerValue (packet_size));
   Config::SetDefault ("ns3::OnOffApplication::DataRate",  StringValue (rate));
 
   //Set Non-unicastMode rate to unicast mode
-  Config::SetDefault ("ns3::WifiRemoteStationManager::NonUnicastMode",StringValue (phyMode));
+  Config::SetDefault ("ns3::WifiRemoteStationManager::NonUnicastMode", StringValue (phyMode));
 
   NodeContainer adhocNodes;
   adhocNodes.Create (m_nNodes);
@@ -261,8 +271,8 @@ RoutingExperiment::Run ()
   // Add a mac and disable rate control
   WifiMacHelper wifiMac;
   wifi.SetRemoteStationManager ("ns3::ConstantRateWifiManager",
-                                "DataMode",StringValue (phyMode),
-                                "ControlMode",StringValue (phyMode));
+                                "DataMode", StringValue (phyMode),
+                                "ControlMode", StringValue (phyMode));
 
   wifiPhy.Set ("TxPowerStart", DoubleValue (m_txp));
   wifiPhy.Set ("TxPowerEnd", DoubleValue (m_txp));
@@ -276,7 +286,7 @@ RoutingExperiment::Run ()
   ObjectFactory pos;
   pos.SetTypeId ("ns3::RandomRectanglePositionAllocator");
   pos.Set ("X", StringValue ("ns3::UniformRandomVariable[Min=0.0|Max=300.0]"));
-  pos.Set ("Y", StringValue ("ns3::UniformRandomVariable[Min=0.0|Max=1500.0]"));
+  pos.Set ("Y", StringValue ("ns3::UniformRandomVariable[Min=0.0|Max=300.0]"));
 
   Ptr<PositionAllocator> taPositionAlloc = pos.Create ()->GetObject<PositionAllocator> ();
   streamIndex += taPositionAlloc->AssignStreams (streamIndex);
@@ -302,25 +312,26 @@ RoutingExperiment::Run ()
   DsrMainHelper dsrMain;
   Ipv4ListRoutingHelper list;
   InternetStackHelper internet;
+  
+  const int16_t priority = 100;
 
   switch (m_protocol)
     {
     case 1:
-      list.Add (olsr, 100);
+      list.Add (olsr, priority);
       m_protocolName = "OLSR";
       break;
     case 2:
-      list.Add (aodv, 100);
+      list.Add (aodv, priority);
       m_protocolName = "AODV";
       break;
     case 3:
-      list.Add (dsdv, 100);
+      list.Add (dsdv, priority);
       m_protocolName = "DSDV";
       break;
     case 4:
-      NS_LOG_INFO("FLOODING ROUTING");
       m_protocolName = "FLOODING";
-      list.Add(flood, 100);
+      list.Add(flood, priority);
       break;
     case 5:
       m_protocolName = "DSR";
@@ -329,38 +340,52 @@ RoutingExperiment::Run ()
       NS_FATAL_ERROR ("No such protocol:" << m_protocol);
     }
 
-  if (m_protocol < 5)
-    {
-      internet.SetRoutingHelper (list);
-      internet.Install (adhocNodes);
-    }
-  else if (m_protocol == 5)
+  NS_LOG_INFO("Using " << m_protocolName << " to route messages");
+
+  if (m_protocolName == "DSR")
     {
       internet.Install (adhocNodes);
       dsrMain.Install (dsr, adhocNodes);
     }
+  else
+    {
+      internet.SetRoutingHelper (list);
+      internet.Install (adhocNodes);
+    }
 
-  NS_LOG_INFO ("assigning ip address");
+  NS_LOG_INFO ("Assigning IP address");
 
   Ipv4AddressHelper addressAdhoc;
   addressAdhoc.SetBase ("10.0.0.0", "255.255.255.0");
   Ipv4InterfaceContainer adhocInterfaces = addressAdhoc.Assign (adhocDevices);
 
-  OnOffHelper onoff1 ("ns3::UdpSocketFactory",Address ());
-  onoff1.SetAttribute ("OnTime", StringValue ("ns3::ConstantRandomVariable[Constant=1.0]"));
-  onoff1.SetAttribute ("OffTime", StringValue ("ns3::ConstantRandomVariable[Constant=0.0]"));
+  Ptr<UniformRandomVariable> rnd = CreateObject<UniformRandomVariable> ();
 
   for (int i = 0; i < m_nSinks; i++)
     {
-      Ptr<Socket> sink = SetupPacketReceive (adhocInterfaces.GetAddress (i), adhocNodes.Get (i));
+      const int target_id = i;
+      const int source_id = i + m_nSinks;
 
-      AddressValue remoteAddress (InetSocketAddress (adhocInterfaces.GetAddress (i), port));
-      onoff1.SetAttribute ("Remote", remoteAddress);
+      Ptr<Node> target_node = adhocNodes.Get (target_id);
+      Ptr<Node> source_node = adhocNodes.Get (source_id);
 
-      Ptr<UniformRandomVariable> var = CreateObject<UniformRandomVariable> ();
-      ApplicationContainer temp = onoff1.Install (adhocNodes.Get (i + m_nSinks));
-      temp.Start (Seconds (var->GetValue (100.0, 101.0)));
-      temp.Stop (Seconds (TotalTime));
+      auto target = InetSocketAddress (adhocInterfaces.GetAddress (target_id), port);
+
+      OnOffHelper onoff ("ns3::UdpSocketFactory", target);
+      onoff.SetAttribute ("OnTime", StringValue ("ns3::ConstantRandomVariable[Constant=1.0]"));
+      onoff.SetAttribute ("OffTime", StringValue ("ns3::ConstantRandomVariable[Constant=0.0]"));
+
+      ApplicationContainer temp = onoff.Install (source_node);
+      temp.Start (Seconds (rnd->GetValue (m_send_start.GetSeconds(), m_send_start.GetSeconds() + 1.0)));
+      temp.Stop (m_total_time);
+
+      SetupPacketReceive (target, target_node);
+
+      NS_LOG_INFO ("Node "
+        << source_id
+        << " (" << adhocInterfaces.GetAddress (source_id) << ")"
+        << " will send packets to node " << target_id
+        << " (" << adhocInterfaces.GetAddress (target_id) << ")");
     }
 
   std::stringstream ss;
@@ -397,11 +422,10 @@ RoutingExperiment::Run ()
 
   CheckThroughput ();
 
-  Simulator::Stop (Seconds (TotalTime));
+  Simulator::Stop (m_total_time);
   Simulator::Run ();
 
   //flowmon->SerializeToXmlFile ((tr_name + ".flowmon").c_str(), false, false);
 
   Simulator::Destroy ();
 }
-

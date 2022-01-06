@@ -54,6 +54,7 @@ NS_OBJECT_ENSURE_REGISTERED (RoutingProtocol);
 /// UDP Port for flooding control traffic
 const uint32_t RoutingProtocol::FLOODING_PORT = 654;
 
+#if 0
 /**
 * \ingroup FLOODING
 * \brief Tag used by FLOODING implementation
@@ -129,6 +130,7 @@ private:
 };
 
 NS_OBJECT_ENSURE_REGISTERED (DeferredRouteOutputTag);
+#endif
 
 void
 RoutingProtocol::PrintRoutingTable (Ptr<OutputStreamWrapper> stream, Time::Unit unit) const
@@ -163,21 +165,7 @@ void
 RoutingProtocol::DoDispose ()
  {
    m_ipv4 = 0;
-
-   for (std::map<Ptr<Socket>, Ipv4InterfaceAddress>::iterator iter =
-          m_socketAddresses.begin (); iter != m_socketAddresses.end (); iter++)
-     {
-       iter->first->Close ();
-     }
-   m_socketAddresses.clear ();
-
-   for (std::map<Ptr<Socket>, Ipv4InterfaceAddress>::iterator iter =
-          m_socketSubnetBroadcastAddresses.begin (); iter != m_socketSubnetBroadcastAddresses.end (); iter++)
-     {
-       iter->first->Close ();
-     }
-   m_socketSubnetBroadcastAddresses.clear ();
-
+   m_addresses.clear ();
    Ipv4RoutingProtocol::DoDispose ();
  }
 
@@ -219,7 +207,15 @@ RoutingProtocol::RouteOutput (Ptr<Packet> p, const Ipv4Header &header,
     NS_LOG_DEBUG ("Using broadcast route");
     return BroadcastRoute (header, oif);
   }
+  else
+  {
+    oif = GetOutputNetDevice();
+    NS_LOG_DEBUG ("Using broadcast route with "
+      << m_ipv4->GetAddress(m_ipv4->GetInterfaceForDevice(oif), 0));
+    return BroadcastRoute (header, oif);
+  }
 
+#if 0
   // Valid route not found, in this case we return loopback.
   // Actual route request will be deferred until packet will be fully formed,
   // routed to loopback, received from loopback and passed to RouteInput (see below)
@@ -232,8 +228,10 @@ RoutingProtocol::RouteOutput (Ptr<Packet> p, const Ipv4Header &header,
       p->AddPacketTag (tag);
     }
   return LoopbackRoute (header, oif);
+#endif
 }
 
+#if 0
 void
 RoutingProtocol::DeferredRouteOutput (Ptr<const Packet> p,
                                       const Ipv4Header &header,
@@ -251,6 +249,7 @@ RoutingProtocol::DeferredRouteOutput (Ptr<const Packet> p,
 
   ucb (ipv4Route, p, header);
 }
+#endif
 
 bool
 RoutingProtocol::RouteInput (Ptr<const Packet> p,
@@ -264,11 +263,12 @@ RoutingProtocol::RouteInput (Ptr<const Packet> p,
   
   NS_LOG_FUNCTION (this << p->GetUid () << header.GetDestination () << idev->GetAddress ());
   
-  /*if (m_socketAddresses.empty ())
+  if (m_addresses.empty ())
     {
       NS_LOG_LOGIC ("No flooding interfaces");
       return false;
-    }*/
+    }
+
   NS_ASSERT (m_ipv4 != 0);
   NS_ASSERT (p != 0);
 
@@ -280,7 +280,8 @@ RoutingProtocol::RouteInput (Ptr<const Packet> p,
   Ipv4Address origin = header.GetSource ();
 
   // Deferred route request
-  if (idev == m_lo)
+  NS_ASSERT(idev != m_lo);
+  /*if (idev == m_lo)
     {
       DeferredRouteOutputTag tag;
       if (p->PeekPacketTag (tag))
@@ -288,11 +289,12 @@ RoutingProtocol::RouteInput (Ptr<const Packet> p,
           DeferredRouteOutput (p, header, ucb, mcb, ecb);
           return true;
         }
-    }
+    }*/
 
   // Duplicate of own packet
   if (IsMyOwnAddress (origin))
     {
+      NS_LOG_DEBUG ("Duplicate packet detected");
       return true;
     }
 
@@ -427,27 +429,7 @@ RoutingProtocol::NotifyInterfaceUp (uint32_t i)
       return;
     }
 
-  // Create a socket to listen only on this interface
-  Ptr<Socket> socket = Socket::CreateSocket (GetObject<Node> (),
-                                             UdpSocketFactory::GetTypeId ());
-  NS_ASSERT (socket != 0);
-  socket->SetRecvCallback (MakeCallback (&RoutingProtocol::RecvFlooding, this));
-  socket->BindToNetDevice (l3->GetNetDevice (i));
-  socket->Bind (InetSocketAddress (iface.GetLocal (), FLOODING_PORT));
-  socket->SetAllowBroadcast (true);
-  socket->SetIpRecvTtl (true);
-  m_socketAddresses.insert (std::make_pair (socket, iface));
-
-  // create also a subnet broadcast socket
-  socket = Socket::CreateSocket (GetObject<Node> (),
-                                 UdpSocketFactory::GetTypeId ());
-  NS_ASSERT (socket != 0);
-  socket->SetRecvCallback (MakeCallback (&RoutingProtocol::RecvFlooding, this));
-  socket->BindToNetDevice (l3->GetNetDevice (i));
-  socket->Bind (InetSocketAddress (iface.GetBroadcast (), FLOODING_PORT));
-  socket->SetAllowBroadcast (true);
-  socket->SetIpRecvTtl (true);
-  m_socketSubnetBroadcastAddresses.insert (std::make_pair (socket, iface));
+  m_addresses.insert (std::make_pair (i, iface));
 }
 
 void
@@ -455,17 +437,7 @@ RoutingProtocol::NotifyInterfaceDown (uint32_t i)
 {
   NS_LOG_FUNCTION (this << m_ipv4->GetAddress (i, 0).GetLocal ());
 
-  // Close socket
-  Ptr<Socket> socket = FindSocketWithInterfaceAddress (m_ipv4->GetAddress (i, 0));
-  NS_ASSERT (socket);
-  socket->Close ();
-  m_socketAddresses.erase (socket);
-
-  // Close socket
-  socket = FindSubnetBroadcastSocketWithInterfaceAddress (m_ipv4->GetAddress (i, 0));
-  NS_ASSERT (socket);
-  socket->Close ();
-  m_socketSubnetBroadcastAddresses.erase (socket);
+  m_addresses.erase (i);
 }
 
 void
@@ -480,35 +452,12 @@ RoutingProtocol::NotifyAddAddress (uint32_t i, Ipv4InterfaceAddress address)
   if (l3->GetNAddresses (i) == 1)
     {
       Ipv4InterfaceAddress iface = l3->GetAddress (i, 0);
-      Ptr<Socket> socket = FindSocketWithInterfaceAddress (iface);
-      if (!socket)
+      if (iface.GetLocal () == Ipv4Address::GetLoopback ())
         {
-          if (iface.GetLocal () == Ipv4Address::GetLoopback ())
-            {
-              return;
-            }
-
-          // Create a socket to listen only on this interface
-          Ptr<Socket> socket = Socket::CreateSocket (GetObject<Node> (),
-                                                     UdpSocketFactory::GetTypeId ());
-          NS_ASSERT (socket != 0);
-          socket->SetRecvCallback (MakeCallback (&RoutingProtocol::RecvFlooding,this));
-          socket->BindToNetDevice (l3->GetNetDevice (i));
-          socket->Bind (InetSocketAddress (iface.GetLocal (), FLOODING_PORT));
-          socket->SetAllowBroadcast (true);
-          m_socketAddresses.insert (std::make_pair (socket, iface));
-
-          // create also a subnet directed broadcast socket
-          socket = Socket::CreateSocket (GetObject<Node> (),
-                                         UdpSocketFactory::GetTypeId ());
-          NS_ASSERT (socket != 0);
-          socket->SetRecvCallback (MakeCallback (&RoutingProtocol::RecvFlooding, this));
-          socket->BindToNetDevice (l3->GetNetDevice (i));
-          socket->Bind (InetSocketAddress (iface.GetBroadcast (), FLOODING_PORT));
-          socket->SetAllowBroadcast (true);
-          socket->SetIpRecvTtl (true);
-          m_socketSubnetBroadcastAddresses.insert (std::make_pair (socket, iface));
+          return;
         }
+
+      m_addresses.insert (std::make_pair (i, iface));
     }
   else
     {
@@ -520,59 +469,14 @@ void
 RoutingProtocol::NotifyRemoveAddress (uint32_t i, Ipv4InterfaceAddress address)
 {
   NS_LOG_FUNCTION (this);
-  Ptr<Socket> socket = FindSocketWithInterfaceAddress (address);
-  if (socket)
-    {
-      socket->Close ();
-      m_socketAddresses.erase (socket);
-
-      Ptr<Socket> unicastSocket = FindSubnetBroadcastSocketWithInterfaceAddress (address);
-      if (unicastSocket)
-        {
-          unicastSocket->Close ();
-          m_socketAddresses.erase (unicastSocket);
-        }
-
-      Ptr<Ipv4L3Protocol> l3 = m_ipv4->GetObject<Ipv4L3Protocol> ();
-      if (l3->GetNAddresses (i))
-        {
-          Ipv4InterfaceAddress iface = l3->GetAddress (i, 0);
-          // Create a socket to listen only on this interface
-          Ptr<Socket> socket = Socket::CreateSocket (GetObject<Node> (),
-                                                     UdpSocketFactory::GetTypeId ());
-          NS_ASSERT (socket != 0);
-          socket->SetRecvCallback (MakeCallback (&RoutingProtocol::RecvFlooding, this));
-          // Bind to any IP address so that broadcasts can be received
-          socket->BindToNetDevice (l3->GetNetDevice (i));
-          socket->Bind (InetSocketAddress (iface.GetLocal (), FLOODING_PORT));
-          socket->SetAllowBroadcast (true);
-          socket->SetIpRecvTtl (true);
-          m_socketAddresses.insert (std::make_pair (socket, iface));
-
-          // create also a unicast socket
-          socket = Socket::CreateSocket (GetObject<Node> (),
-                                         UdpSocketFactory::GetTypeId ());
-          NS_ASSERT (socket != 0);
-          socket->SetRecvCallback (MakeCallback (&RoutingProtocol::RecvFlooding, this));
-          socket->BindToNetDevice (l3->GetNetDevice (i));
-          socket->Bind (InetSocketAddress (iface.GetBroadcast (), FLOODING_PORT));
-          socket->SetAllowBroadcast (true);
-          socket->SetIpRecvTtl (true);
-          m_socketSubnetBroadcastAddresses.insert (std::make_pair (socket, iface));
-        }
-    }
-  else
-    {
-      NS_LOG_LOGIC ("Remove address not participating in Flooding operation");
-    }
+  m_addresses.erase (i);
 }
 
 bool
-RoutingProtocol::IsMyOwnAddress (Ipv4Address src)
+RoutingProtocol::IsMyOwnAddress (Ipv4Address src) const
 {
   NS_LOG_FUNCTION (this << src);
-  for (std::map<Ptr<Socket>, Ipv4InterfaceAddress>::const_iterator j =
-         m_socketAddresses.begin (); j != m_socketAddresses.end (); ++j)
+  for (auto j = m_addresses.cbegin (); j != m_addresses.cend (); ++j)
     {
       Ipv4InterfaceAddress iface = j->second;
       if (src == iface.GetLocal ())
@@ -581,84 +485,6 @@ RoutingProtocol::IsMyOwnAddress (Ipv4Address src)
         }
     }
   return false;
-}
-
-void
-RoutingProtocol::RecvFlooding (Ptr<Socket> socket)
-{
-  NS_LOG_FUNCTION (this << socket);
-  
-  /*Address sourceAddress;
-  Ptr<Packet> packet = socket->RecvFrom (sourceAddress);
-  InetSocketAddress inetSourceAddr = InetSocketAddress::ConvertFrom (sourceAddress);
-  Ipv4Address sender = inetSourceAddr.GetIpv4 ();
-  Ipv4Address receiver;
-
-  if (m_socketAddresses.find (socket) != m_socketAddresses.end ())
-    {
-      receiver = m_socketAddresses[socket].GetLocal ();
-    }
-  else if (m_socketSubnetBroadcastAddresses.find (socket) != m_socketSubnetBroadcastAddresses.end ())
-    {
-      receiver = m_socketSubnetBroadcastAddresses[socket].GetLocal ();
-    }
-  else
-    {
-      NS_ASSERT_MSG (false, "Received a packet from an unknown socket");
-    }
-  NS_LOG_DEBUG ("flooding node " << this << " received a flooding packet from " << sender << " to " << receiver);
-
-  TypeHeader tHeader (FLOODINGTYPE_FLOODING);
-  packet->RemoveHeader (tHeader);
-  if (!tHeader.IsValid ())
-    {
-      NS_LOG_DEBUG ("flooding message " << packet->GetUid () << " with unknown type received: " << tHeader.Get () << ". Drop");
-      return; // drop
-    }*/
-
-
-  //todo: implement flooding forwarding here
-    
-}
-
-Ptr<Socket>
-RoutingProtocol::FindSocketWithInterfaceAddress (Ipv4InterfaceAddress addr ) const
-{
-  NS_LOG_FUNCTION (this << addr);
-
-  for (std::map<Ptr<Socket>, Ipv4InterfaceAddress>::const_iterator j =
-         m_socketAddresses.begin (); j != m_socketAddresses.end (); ++j)
-    {
-      Ptr<Socket> socket = j->first;
-      Ipv4InterfaceAddress iface = j->second;
-      if (iface == addr)
-        {
-          return socket;
-        }
-    }
-
-  Ptr<Socket> socket;
-  return socket;
-}
-
-Ptr<Socket>
-RoutingProtocol::FindSubnetBroadcastSocketWithInterfaceAddress (Ipv4InterfaceAddress addr ) const
-{
-  NS_LOG_FUNCTION (this << addr);
-
-  for (std::map<Ptr<Socket>, Ipv4InterfaceAddress>::const_iterator j =
-         m_socketSubnetBroadcastAddresses.begin (); j != m_socketSubnetBroadcastAddresses.end (); ++j)
-    {
-      Ptr<Socket> socket = j->first;
-      Ipv4InterfaceAddress iface = j->second;
-      if (iface == addr)
-        {
-          return socket;
-        }
-    }
-
-  Ptr<Socket> socket;
-  return socket;
 }
 
 int64_t
@@ -676,14 +502,11 @@ RoutingProtocol::DoInitialize (void)
   Ipv4RoutingProtocol::DoInitialize ();
 }
 
-Ptr<Ipv4Route>
-RoutingProtocol::LoopbackRoute (const Ipv4Header & hdr, Ptr<NetDevice> oif) const
+Ipv4Address
+RoutingProtocol::GetRouteSource (const Ipv4Header & hdr, Ptr<NetDevice> oif) const
 {
   NS_LOG_FUNCTION (this << hdr);
-  NS_ASSERT (m_lo != 0);
 
-  Ptr<Ipv4Route> rt = Create<Ipv4Route> ();
-  rt->SetDestination (hdr.GetDestination ());
   //
   // Source address selection here is tricky.  The loopback route is
   // returned when AODV does not have a route; this causes the packet
@@ -700,28 +523,49 @@ RoutingProtocol::LoopbackRoute (const Ipv4Header & hdr, Ptr<NetDevice> oif) cons
   // If RouteOutput() caller specified an outgoing interface, that
   // further constrains the selection of source address
   //
-  std::map<Ptr<Socket>, Ipv4InterfaceAddress>::const_iterator j = m_socketAddresses.begin ();
+  auto j = m_addresses.cbegin ();
   if (oif)
     {
       // Iterate to find an address on the oif device
-      for (j = m_socketAddresses.begin (); j != m_socketAddresses.end (); ++j)
+      for (j = m_addresses.cbegin (); j != m_addresses.cend (); ++j)
         {
           Ipv4Address addr = j->second.GetLocal ();
           int32_t interface = m_ipv4->GetInterfaceForAddress (addr);
-          if (oif == m_ipv4->GetNetDevice (static_cast<uint32_t> (interface)))
+
+          if (interface < 0)
+          {
+            continue;
+          }
+
+          uint32_t uinterface = static_cast<uint32_t>(interface);
+
+          NS_ASSERT (j->first == uinterface);
+
+          if (oif == m_ipv4->GetNetDevice (uinterface))
             {
-              rt->SetSource (addr);
-              break;
+              return addr;
             }
         }
     }
-  else
-    {
-      rt->SetSource (j->second.GetLocal ());
-    }
-  NS_ASSERT_MSG (rt->GetSource () != Ipv4Address (), "Valid AODV source address not found");
+
+    NS_ASSERT (j != m_addresses.cend());
+
+    return j->second.GetLocal ();
+}
+
+Ptr<Ipv4Route>
+RoutingProtocol::LoopbackRoute (const Ipv4Header & hdr, Ptr<NetDevice> oif) const
+{
+  NS_LOG_FUNCTION (this << hdr);
+  NS_ASSERT (m_lo != 0);
+
+  Ptr<Ipv4Route> rt = Create<Ipv4Route> ();
+  rt->SetDestination (hdr.GetDestination ());
+  rt->SetSource (GetRouteSource(hdr, oif));
   rt->SetGateway (Ipv4Address::GetLoopback ());
   rt->SetOutputDevice (m_lo);
+
+  NS_ASSERT_MSG (rt->GetSource () != Ipv4Address (), "Valid source address not found");
 
   return rt;
 }
@@ -731,12 +575,20 @@ RoutingProtocol::BroadcastRoute (const Ipv4Header & hdr, Ptr<NetDevice> oif) con
 {
   NS_LOG_FUNCTION (this << hdr);
 
+  Ipv4Address src = hdr.GetSource ();
+  if (src == Ipv4Address ())
+  {
+    src = GetRouteSource(hdr, oif);
+  }
+
   Ptr<Ipv4Route> rt = Create<Ipv4Route> ();
   rt->SetDestination (hdr.GetDestination ());
-  rt->SetSource (hdr.GetSource ());
-  rt->SetGateway (Ipv4Address::GetAny ());
-  //rt->SetGateway (Ipv4Address::GetBroadcast ()); // TODO: should this be our ip address on the interface?
+  rt->SetSource (src);
+  //rt->SetGateway (Ipv4Address::GetAny ());
+  rt->SetGateway (Ipv4Address::GetBroadcast ());
   rt->SetOutputDevice (oif);
+
+  NS_ASSERT_MSG (rt->GetSource () != Ipv4Address (), "Valid source address not found");
 
   return rt;
 }
@@ -749,17 +601,18 @@ RoutingProtocol::GetOutputNetDevice () const
   // Find the only device other than the loopback which is up
   uint32_t ninterfaces = m_ipv4->GetNInterfaces();
 
-  NS_ASSERT(ninterfaces >= 0 && ninterfaces <= 2);
-
   for (uint32_t i = 0; i != ninterfaces; ++i)
   {
     Ptr<NetDevice> netdev = m_ipv4->GetNetDevice(i);
     if (netdev != m_lo)
     {
+      //NS_LOG_DEBUG("Found device " << i << "/" << ninterfaces
+      //             << " with address " << m_ipv4->GetAddress(i, 0));
       return netdev;
     }
   }
 
+  NS_LOG_ERROR("Failed to find output device");
   Ptr<NetDevice> netdev;
   return netdev;
 }

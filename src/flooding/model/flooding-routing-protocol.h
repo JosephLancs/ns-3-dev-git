@@ -103,10 +103,8 @@ private:
 
   /// IP protocol
   Ptr<Ipv4> m_ipv4;
-  /// Raw unicast socket per each IP interface, map socket -> iface address (IP + mask)
-  std::map< Ptr<Socket>, Ipv4InterfaceAddress > m_socketAddresses;
-  /// Raw subnet directed broadcast socket per each IP interface, map socket -> iface address (IP + mask)
-  std::map< Ptr<Socket>, Ipv4InterfaceAddress > m_socketSubnetBroadcastAddresses;
+  /// 
+  std::map<uint32_t, Ipv4InterfaceAddress> m_addresses;
   /// Loopback device used to defer RREQ until packet will be fully formed
   Ptr<NetDevice> m_lo;
 
@@ -116,6 +114,8 @@ private:
 private:
   /// Start protocol operation
   void Start ();
+
+#if 0
   /**
    * Queue packet and send route request
    *
@@ -129,27 +129,17 @@ private:
                             UnicastForwardCallback ucb,
                             MulticastForwardCallback mcb,
                             ErrorCallback ecb);
+#endif
+
   /**
    * Test whether the provided address is assigned to an interface on this node
    * \param src the source IP address
    * \returns true if the IP address is the node's IP address
    */
-  bool IsMyOwnAddress (Ipv4Address src);
+  bool IsMyOwnAddress (Ipv4Address src) const;
 
-  /**
-   * Find unicast socket with local interface address iface
-   *
-   * \param iface the interface
-   * \returns the socket associated with the interface
-   */
-  Ptr<Socket> FindSocketWithInterfaceAddress (Ipv4InterfaceAddress iface) const;
-  /**
-   * Find subnet directed broadcast socket with local interface address iface
-   *
-   * \param iface the interface
-   * \returns the socket associated with the interface
-   */
-  Ptr<Socket> FindSubnetBroadcastSocketWithInterfaceAddress (Ipv4InterfaceAddress iface) const;
+  Ipv4Address
+  GetRouteSource (const Ipv4Header & hdr, Ptr<NetDevice> oif) const;
 
   /**
    * Create loopback route for given header
@@ -169,12 +159,6 @@ private:
   Ptr<Ipv4Route> BroadcastRoute (const Ipv4Header & header, Ptr<NetDevice> oif) const;
 
   Ptr<NetDevice> GetOutputNetDevice () const;
-
-  ///\name Receive control packets
-  //\{
-  /// Receive and process control packet
-  void RecvFlooding (Ptr<Socket> socket);
-  //\}
 
   /// Provides uniform random variables.
   Ptr<UniformRandomVariable> m_uniformRandomVariable;
