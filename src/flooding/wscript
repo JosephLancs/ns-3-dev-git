@@ -4,12 +4,9 @@ def build(bld):
     module = bld.create_ns3_module('flooding', ['internet', 'wifi'])
     module.includes = '.'
     module.source = [
-        #'model/aodv-id-cache.cc',
-        #'model/aodv-dpd.cc',
-        #'model/aodv-rtable.cc',
-        #'model/aodv-rqueue.cc',
+        'model/flooding-id-cache.cc',
+        'model/flooding-dpd.cc',
         'model/flooding-packet.cc',
-        #'model/flooding-neighbor.cc',
         'model/flooding-routing-protocol.cc',
         'helper/flooding-helper.cc',
         ]
@@ -18,12 +15,9 @@ def build(bld):
     headers = bld(features='ns3header')
     headers.module = 'flooding'
     headers.source = [
-        #'model/aodv-id-cache.h',
-        #'model/aodv-dpd.h',
-        #'model/aodv-rtable.h',
-        #'model/aodv-rqueue.h',
+        'model/flooding-id-cache.h',
+        'model/flooding-dpd.h',
         'model/flooding-packet.h',
-        #'model/flooding-neighbor.h',
         'model/flooding-routing-protocol.h',
         'helper/flooding-helper.h',
         ]

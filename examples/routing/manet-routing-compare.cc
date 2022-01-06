@@ -88,10 +88,12 @@ class RoutingExperiment
 {
 public:
   RoutingExperiment ();
-  void Run (int nSinks, double txp, std::string CSVfileName);
+  void Run ();
   //static void SetMACParam (ns3::NetDeviceContainer & devices,
   //                                 int slotDistance);
-  std::string CommandSetup (int argc, char **argv);
+  void CommandSetup (int argc, char **argv);
+
+  std::string GetCSVFileName() const { return m_CSVfileName; }
 
 private:
   Ptr<Socket> SetupPacketReceive (Ipv4Address addr, Ptr<Node> node);
@@ -104,6 +106,7 @@ private:
 
   std::string m_CSVfileName;
   int m_nSinks;
+  int m_nNodes;
   std::string m_protocolName;
   double m_txp;
   bool m_traceMobility;
@@ -115,6 +118,9 @@ RoutingExperiment::RoutingExperiment ()
     bytesTotal (0),
     packetsReceived (0),
     m_CSVfileName ("manet-routing.output.csv"),
+    m_nSinks (1),
+    m_nNodes (100),
+    m_txp (7.5),
     m_traceMobility (false),
     m_protocol (2) // AODV
 {
@@ -164,6 +170,7 @@ RoutingExperiment::CheckThroughput ()
       << kbs << ","
       << packetsReceived << ","
       << m_nSinks << ","
+      << m_nNodes << ","
       << m_protocolName << ","
       << m_txp << ""
       << std::endl;
@@ -185,49 +192,44 @@ RoutingExperiment::SetupPacketReceive (Ipv4Address addr, Ptr<Node> node)
   return sink;
 }
 
-std::string
+void
 RoutingExperiment::CommandSetup (int argc, char **argv)
 {
   CommandLine cmd;
   cmd.AddValue ("CSVfileName", "The name of the CSV output file name", m_CSVfileName);
   cmd.AddValue ("traceMobility", "Enable mobility tracing", m_traceMobility);
-  cmd.AddValue ("protocol", "1=OLSR;2=AODV;3=DSDV;4=DSR", m_protocol);
+  cmd.AddValue ("protocol", "1=OLSR;2=AODV;3=DSDV;4=Flooding;5=DSR", m_protocol);
+  cmd.AddValue ("sinks", "The number of sinks", m_nSinks);
+  cmd.AddValue ("nodes", "The number of nodes", m_nNodes);
+  cmd.AddValue ("transmit-power", "The transmit power (default: 7.5)", m_txp);
   cmd.Parse (argc, argv);
-  return m_CSVfileName;
 }
 
 int
 main (int argc, char *argv[])
 {
   RoutingExperiment experiment;
-  std::string CSVfileName = experiment.CommandSetup (argc,argv);
+  experiment.CommandSetup (argc, argv);
 
   //blank out the last output file and write the column headers
-  std::ofstream out (CSVfileName.c_str ());
+  std::ofstream out (experiment.GetCSVFileName().c_str ());
   out << "SimulationSecond," <<
   "ReceiveRate," <<
   "PacketsReceived," <<
   "NumberOfSinks," <<
+  "NumberOfNodes," <<
   "RoutingProtocol," <<
   "TransmissionPower" <<
   std::endl;
   out.close ();
 
-  int nSinks = 10;
-  double txp = 7.5;
-
-  experiment.Run (nSinks, txp, CSVfileName);
+  experiment.Run ();
 }
 
 void
-RoutingExperiment::Run (int nSinks, double txp, std::string CSVfileName)
+RoutingExperiment::Run ()
 {
   Packet::EnablePrinting ();
-  m_nSinks = nSinks;
-  m_txp = txp;
-  m_CSVfileName = CSVfileName;
-
-  int nWifis = 50;
 
   double TotalTime = 200.0;
   std::string rate ("2048bps");
@@ -244,13 +246,13 @@ RoutingExperiment::Run (int nSinks, double txp, std::string CSVfileName)
   Config::SetDefault ("ns3::WifiRemoteStationManager::NonUnicastMode",StringValue (phyMode));
 
   NodeContainer adhocNodes;
-  adhocNodes.Create (nWifis);
+  adhocNodes.Create (m_nNodes);
 
   // setting up wifi phy and channel using helpers
   WifiHelper wifi;
   wifi.SetStandard (WIFI_PHY_STANDARD_80211b);
 
-  YansWifiPhyHelper wifiPhy =  YansWifiPhyHelper::Default ();
+  YansWifiPhyHelper wifiPhy = YansWifiPhyHelper::Default ();
   YansWifiChannelHelper wifiChannel;
   wifiChannel.SetPropagationDelay ("ns3::ConstantSpeedPropagationDelayModel");
   wifiChannel.AddPropagationLoss ("ns3::FriisPropagationLossModel");
@@ -262,8 +264,8 @@ RoutingExperiment::Run (int nSinks, double txp, std::string CSVfileName)
                                 "DataMode",StringValue (phyMode),
                                 "ControlMode",StringValue (phyMode));
 
-  wifiPhy.Set ("TxPowerStart",DoubleValue (txp));
-  wifiPhy.Set ("TxPowerEnd", DoubleValue (txp));
+  wifiPhy.Set ("TxPowerStart", DoubleValue (m_txp));
+  wifiPhy.Set ("TxPowerEnd", DoubleValue (m_txp));
 
   wifiMac.SetType ("ns3::AdhocWifiMac");
   NetDeviceContainer adhocDevices = wifi.Install (wifiPhy, wifiMac, adhocNodes);
@@ -315,13 +317,13 @@ RoutingExperiment::Run (int nSinks, double txp, std::string CSVfileName)
       list.Add (dsdv, 100);
       m_protocolName = "DSDV";
       break;
-    case 5:
-      m_protocolName = "DSR";
-      break;
     case 4:
       NS_LOG_INFO("FLOODING ROUTING");
       m_protocolName = "FLOODING";
       list.Add(flood, 100);
+      break;
+    case 5:
+      m_protocolName = "DSR";
       break;
     default:
       NS_FATAL_ERROR ("No such protocol:" << m_protocol);
@@ -341,15 +343,14 @@ RoutingExperiment::Run (int nSinks, double txp, std::string CSVfileName)
   NS_LOG_INFO ("assigning ip address");
 
   Ipv4AddressHelper addressAdhoc;
-  addressAdhoc.SetBase ("10.1.1.0", "255.255.255.0");
-  Ipv4InterfaceContainer adhocInterfaces;
-  adhocInterfaces = addressAdhoc.Assign (adhocDevices);
+  addressAdhoc.SetBase ("10.0.0.0", "255.255.255.0");
+  Ipv4InterfaceContainer adhocInterfaces = addressAdhoc.Assign (adhocDevices);
 
   OnOffHelper onoff1 ("ns3::UdpSocketFactory",Address ());
   onoff1.SetAttribute ("OnTime", StringValue ("ns3::ConstantRandomVariable[Constant=1.0]"));
   onoff1.SetAttribute ("OffTime", StringValue ("ns3::ConstantRandomVariable[Constant=0.0]"));
 
-  for (int i = 0; i < nSinks; i++)
+  for (int i = 0; i < m_nSinks; i++)
     {
       Ptr<Socket> sink = SetupPacketReceive (adhocInterfaces.GetAddress (i), adhocNodes.Get (i));
 
@@ -357,13 +358,13 @@ RoutingExperiment::Run (int nSinks, double txp, std::string CSVfileName)
       onoff1.SetAttribute ("Remote", remoteAddress);
 
       Ptr<UniformRandomVariable> var = CreateObject<UniformRandomVariable> ();
-      ApplicationContainer temp = onoff1.Install (adhocNodes.Get (i + nSinks));
-      temp.Start (Seconds (var->GetValue (100.0,101.0)));
+      ApplicationContainer temp = onoff1.Install (adhocNodes.Get (i + m_nSinks));
+      temp.Start (Seconds (var->GetValue (100.0, 101.0)));
       temp.Stop (Seconds (TotalTime));
     }
 
   std::stringstream ss;
-  ss << nWifis;
+  ss << m_nNodes;
   std::string nodes = ss.str ();
 
   std::stringstream ss2;
