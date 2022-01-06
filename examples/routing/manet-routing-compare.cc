@@ -93,7 +93,7 @@ public:
   //                                 int slotDistance);
   void CommandSetup (int argc, char **argv);
 
-  std::string GetCSVFileName() const { return m_CSVfileName; }
+  std::string GetCSVFileName () const { return m_CSVfileName; }
 
 private:
   Ptr<Socket> SetupPacketReceive (Ipv4Address addr, Ptr<Node> node);

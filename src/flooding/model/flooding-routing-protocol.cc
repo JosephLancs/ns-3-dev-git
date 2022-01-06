@@ -160,7 +160,7 @@ RoutingProtocol::~RoutingProtocol ()
 }
 
 void
- RoutingProtocol::DoDispose ()
+RoutingProtocol::DoDispose ()
  {
    m_ipv4 = 0;
 
@@ -235,20 +235,31 @@ RoutingProtocol::RouteOutput (Ptr<Packet> p, const Ipv4Header &header,
 }
 
 void
-RoutingProtocol::DeferredRouteOutput (Ptr<const Packet> p, const Ipv4Header &header,
-                                      UnicastForwardCallback ucb, ErrorCallback ecb)
+RoutingProtocol::DeferredRouteOutput (Ptr<const Packet> p,
+                                      const Ipv4Header &header,
+                                      UnicastForwardCallback ucb,
+                                      MulticastForwardCallback mcb,
+                                      ErrorCallback ecb)
 {
   NS_LOG_FUNCTION (this << p << header);
   NS_ASSERT (p != 0 && p != Ptr<Packet> ());
 
-  Ptr<Ipv4Route> ipv4Route = BroadcastRoute (header, GetOutputNetDevice ());
+  Ptr<NetDevice> oif = GetOutputNetDevice ();
+  Ptr<Ipv4Route> ipv4Route = BroadcastRoute (header, oif);
+
+  NS_LOG_DEBUG("DeferredRouteOutput to " << oif->GetIfIndex());
+
   ucb (ipv4Route, p, header);
 }
 
 bool
-RoutingProtocol::RouteInput (Ptr<const Packet> p, const Ipv4Header &header,
-                             Ptr<const NetDevice> idev, UnicastForwardCallback ucb,
-                             MulticastForwardCallback mcb, LocalDeliverCallback lcb, ErrorCallback ecb)
+RoutingProtocol::RouteInput (Ptr<const Packet> p,
+                             const Ipv4Header &header,
+                             Ptr<const NetDevice> idev,
+                             UnicastForwardCallback ucb,
+                             MulticastForwardCallback mcb,
+                             LocalDeliverCallback lcb,
+                             ErrorCallback ecb)
 {
   
   NS_LOG_FUNCTION (this << p->GetUid () << header.GetDestination () << idev->GetAddress ());
@@ -274,7 +285,7 @@ RoutingProtocol::RouteInput (Ptr<const Packet> p, const Ipv4Header &header,
       DeferredRouteOutputTag tag;
       if (p->PeekPacketTag (tag))
         {
-          DeferredRouteOutput (p, header, ucb, ecb);
+          DeferredRouteOutput (p, header, ucb, mcb, ecb);
           return true;
         }
     }
@@ -286,10 +297,10 @@ RoutingProtocol::RouteInput (Ptr<const Packet> p, const Ipv4Header &header,
     }
 
   // FLOODING is not a multicast routing protocol
-  if (dst.IsMulticast ())
+  /*if (dst.IsMulticast ())
     {
       return false;
-    }
+    }*/
 
 #if 0
   // Broadcast local delivery/forwarding
@@ -723,7 +734,8 @@ RoutingProtocol::BroadcastRoute (const Ipv4Header & hdr, Ptr<NetDevice> oif) con
   Ptr<Ipv4Route> rt = Create<Ipv4Route> ();
   rt->SetDestination (hdr.GetDestination ());
   rt->SetSource (hdr.GetSource ());
-  rt->SetGateway (Ipv4Address::GetBroadcast ()); // TODO: should this be our ip address on the interface?
+  rt->SetGateway (Ipv4Address::GetAny ());
+  //rt->SetGateway (Ipv4Address::GetBroadcast ()); // TODO: should this be our ip address on the interface?
   rt->SetOutputDevice (oif);
 
   return rt;

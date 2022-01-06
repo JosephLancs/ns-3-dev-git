@@ -62,15 +62,26 @@ public:
   virtual void DoDispose ();
 
   // Inherited from Ipv4RoutingProtocol
-  Ptr<Ipv4Route> RouteOutput (Ptr<Packet> p, const Ipv4Header &header, Ptr<NetDevice> oif, Socket::SocketErrno &sockerr);
-  bool RouteInput (Ptr<const Packet> p, const Ipv4Header &header, Ptr<const NetDevice> idev,
-                   UnicastForwardCallback ucb, MulticastForwardCallback mcb,
-                   LocalDeliverCallback lcb, ErrorCallback ecb);
+  Ptr<Ipv4Route> RouteOutput (Ptr<Packet> p,
+                              const Ipv4Header &header,
+                              Ptr<NetDevice> oif,
+                              Socket::SocketErrno &sockerr);
+  
+  bool RouteInput (Ptr<const Packet> p,
+                   const Ipv4Header &header,
+                   Ptr<const NetDevice> idev,
+                   UnicastForwardCallback ucb,
+                   MulticastForwardCallback mcb,
+                   LocalDeliverCallback lcb,
+                   ErrorCallback ecb);
+  
   virtual void NotifyInterfaceUp (uint32_t interface);
   virtual void NotifyInterfaceDown (uint32_t interface);
   virtual void NotifyAddAddress (uint32_t interface, Ipv4InterfaceAddress address);
   virtual void NotifyRemoveAddress (uint32_t interface, Ipv4InterfaceAddress address);
+  
   virtual void SetIpv4 (Ptr<Ipv4> ipv4);
+  
   virtual void PrintRoutingTable (Ptr<OutputStreamWrapper> stream, Time::Unit unit = Time::S) const;
 
   /**
@@ -113,7 +124,11 @@ private:
    * \param ucb the UnicastForwardCallback function
    * \param ecb the ErrorCallback function
    */ 
-  void DeferredRouteOutput (Ptr<const Packet> p, const Ipv4Header & header, UnicastForwardCallback ucb, ErrorCallback ecb);
+  void DeferredRouteOutput (Ptr<const Packet> p,
+                            const Ipv4Header & header,
+                            UnicastForwardCallback ucb,
+                            MulticastForwardCallback mcb,
+                            ErrorCallback ecb);
   /**
    * Test whether the provided address is assigned to an interface on this node
    * \param src the source IP address
