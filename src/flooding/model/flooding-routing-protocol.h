@@ -54,7 +54,6 @@ public:
    * \return the object TypeId
    */
   static TypeId GetTypeId (void);
-  static const uint32_t FLOODING_PORT;
 
   /// constructor
   RoutingProtocol ();
@@ -114,22 +113,6 @@ private:
 private:
   /// Start protocol operation
   void Start ();
-
-#if 0
-  /**
-   * Queue packet and send route request
-   *
-   * \param p the packet to route
-   * \param header the IP header
-   * \param ucb the UnicastForwardCallback function
-   * \param ecb the ErrorCallback function
-   */ 
-  void DeferredRouteOutput (Ptr<const Packet> p,
-                            const Ipv4Header & header,
-                            UnicastForwardCallback ucb,
-                            MulticastForwardCallback mcb,
-                            ErrorCallback ecb);
-#endif
 
   /**
    * Test whether the provided address is assigned to an interface on this node

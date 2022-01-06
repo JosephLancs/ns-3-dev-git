@@ -51,87 +51,6 @@ NS_LOG_COMPONENT_DEFINE ("FloodingRoutingProtocol");
 namespace flooding {
 NS_OBJECT_ENSURE_REGISTERED (RoutingProtocol);
 
-/// UDP Port for flooding control traffic
-const uint32_t RoutingProtocol::FLOODING_PORT = 654;
-
-#if 0
-/**
-* \ingroup FLOODING
-* \brief Tag used by FLOODING implementation
-*/
-class DeferredRouteOutputTag : public Tag
-{
-
-public:
-  /**
-   * \brief Constructor
-   * \param o the output interface
-   */
-  DeferredRouteOutputTag (int32_t o = -1) : Tag (),
-                                            m_oif (o)
-  {
-  }
-
-  /**
-   * \brief Get the type ID.
-   * \return the object TypeId
-   */
-  static TypeId GetTypeId ()
-  {
-    static TypeId tid = TypeId ("ns3::flooding::DeferredRouteOutputTag")
-      .SetParent<Tag> ()
-      .SetGroupName ("Flooding")
-      .AddConstructor<DeferredRouteOutputTag> ()
-    ;
-    return tid;
-  }
-
-  /**
-   * \brief Get the type ID.
-   * \return the object TypeId
-   */
-  TypeId  GetInstanceTypeId () const
-  {
-    return GetTypeId ();
-  }
-  
-  /**
-   * \brief Set the output interface
-   * \param oif the output interface
-   */
-  void SetInterface (int32_t oif)
-  {
-    m_oif = oif;
-  }
-
-  uint32_t GetSerializedSize () const
-  {
-    return sizeof(int32_t);
-  }
-
-  void  Serialize (TagBuffer i) const
-  {
-    i.WriteU32 (m_oif);
-  }
-
-  void  Deserialize (TagBuffer i)
-  {
-    m_oif = i.ReadU32 ();
-  }
-
-  void  Print (std::ostream &os) const
-  {
-    os << "DeferredRouteOutputTag: output interface = " << m_oif;
-  }
-
-private:
-  /// Positive if output device is fixed in RouteOutput
-  int32_t m_oif;
-};
-
-NS_OBJECT_ENSURE_REGISTERED (DeferredRouteOutputTag);
-#endif
-
 void
 RoutingProtocol::PrintRoutingTable (Ptr<OutputStreamWrapper> stream, Time::Unit unit) const
 {
@@ -192,13 +111,13 @@ RoutingProtocol::RouteOutput (Ptr<Packet> p, const Ipv4Header &header,
     return LoopbackRoute (header, oif); // later
   }
 
-  /*if (m_socketAddresses.empty ())
+  if (m_addresses.empty ())
   {
-    NS_LOG_LOGIC ("No flooding interfaces");
+    NS_LOG_LOGIC ("No interfaces to send on");
     sockerr = Socket::ERROR_NOROUTETOHOST;
     Ptr<Ipv4Route> ipv4Route;
     return ipv4Route;
-  }*/
+  }
 
   sockerr = Socket::ERROR_NOTERROR;
 
@@ -214,42 +133,7 @@ RoutingProtocol::RouteOutput (Ptr<Packet> p, const Ipv4Header &header,
       << m_ipv4->GetAddress(m_ipv4->GetInterfaceForDevice(oif), 0));
     return BroadcastRoute (header, oif);
   }
-
-#if 0
-  // Valid route not found, in this case we return loopback.
-  // Actual route request will be deferred until packet will be fully formed,
-  // routed to loopback, received from loopback and passed to RouteInput (see below)
-  NS_LOG_DEBUG ("No output interface yet, deferring route");
-
-  uint32_t iif = (oif ? m_ipv4->GetInterfaceForDevice (oif) : -1);
-  DeferredRouteOutputTag tag (iif);
-  if (!p->PeekPacketTag (tag))
-    {
-      p->AddPacketTag (tag);
-    }
-  return LoopbackRoute (header, oif);
-#endif
 }
-
-#if 0
-void
-RoutingProtocol::DeferredRouteOutput (Ptr<const Packet> p,
-                                      const Ipv4Header &header,
-                                      UnicastForwardCallback ucb,
-                                      MulticastForwardCallback mcb,
-                                      ErrorCallback ecb)
-{
-  NS_LOG_FUNCTION (this << p << header);
-  NS_ASSERT (p != 0 && p != Ptr<Packet> ());
-
-  Ptr<NetDevice> oif = GetOutputNetDevice ();
-  Ptr<Ipv4Route> ipv4Route = BroadcastRoute (header, oif);
-
-  NS_LOG_DEBUG("DeferredRouteOutput to " << oif->GetIfIndex());
-
-  ucb (ipv4Route, p, header);
-}
-#endif
 
 bool
 RoutingProtocol::RouteInput (Ptr<const Packet> p,
@@ -260,7 +144,6 @@ RoutingProtocol::RouteInput (Ptr<const Packet> p,
                              LocalDeliverCallback lcb,
                              ErrorCallback ecb)
 {
-  
   NS_LOG_FUNCTION (this << p->GetUid () << header.GetDestination () << idev->GetAddress ());
   
   if (m_addresses.empty ())
@@ -279,17 +162,8 @@ RoutingProtocol::RouteInput (Ptr<const Packet> p,
   Ipv4Address dst = header.GetDestination ();
   Ipv4Address origin = header.GetSource ();
 
-  // Deferred route request
+  // Deferred route request should not occur
   NS_ASSERT(idev != m_lo);
-  /*if (idev == m_lo)
-    {
-      DeferredRouteOutputTag tag;
-      if (p->PeekPacketTag (tag))
-        {
-          DeferredRouteOutput (p, header, ucb, mcb, ecb);
-          return true;
-        }
-    }*/
 
   // Duplicate of own packet
   if (IsMyOwnAddress (origin))
@@ -299,72 +173,11 @@ RoutingProtocol::RouteInput (Ptr<const Packet> p,
     }
 
   // FLOODING is not a multicast routing protocol
-  /*if (dst.IsMulticast ())
+  if (dst.IsMulticast ())
     {
+      NS_LOG_ERROR ("Do not support a multicast destination");
       return false;
-    }*/
-
-#if 0
-  // Broadcast local delivery/forwarding
-  for (std::map<Ptr<Socket>, Ipv4InterfaceAddress>::const_iterator j =
-         m_socketAddresses.begin (); j != m_socketAddresses.end (); ++j)
-    {
-      Ipv4InterfaceAddress iface = j->second;
-      if (m_ipv4->GetInterfaceForAddress (iface.GetLocal ()) == iif)
-        {
-          if (dst == iface.GetBroadcast () || dst.IsBroadcast ())
-            {
-              if (m_dpd.IsDuplicate (p, header))
-                {
-                  NS_LOG_DEBUG ("Duplicated packet " << p->GetUid () << " from " << origin << ". Drop.");
-                  return true;
-                }
-
-              Ptr<Packet> packet = p->Copy ();
-              if (!lcb.IsNull ())
-                {
-                  NS_LOG_LOGIC ("Broadcast local delivery to " << iface.GetLocal ());
-                  lcb (p, header, iif);
-                  // Fall through to additional processing
-                }
-              else
-                {
-                  NS_LOG_ERROR ("Unable to deliver packet locally due to null callback " << p->GetUid () << " from " << origin);
-                  ecb (p, header, Socket::ERROR_NOROUTETOHOST);
-                }
-
-              /*if (!m_enableBroadcast)
-                {
-                  return true;
-                }*/
-
-              if (header.GetProtocol () == UdpL4Protocol::PROT_NUMBER)
-                {
-                  UdpHeader udpHeader;
-                  p->PeekHeader (udpHeader);
-                  if (udpHeader.GetDestinationPort () == FLOODING_PORT)
-                    {
-                      // flooding packets sent in broadcast are already managed
-                      return true;
-                    }
-                }
-
-              if (header.GetTtl () > 1)
-                {
-                  NS_LOG_LOGIC ("Forward broadcast. TTL " << (uint16_t) header.GetTtl ());
- 
-                  Ptr<Ipv4Route> ipv4Route = BroadcastRoute (header, GetOutputNetDevice ());
-                  ucb (ipv4Route, packet, header);
-                }
-              else
-                {
-                  NS_LOG_DEBUG ("TTL exceeded. Drop packet " << p->GetUid ());
-                }
-              return true;
-            }
-        }
     }
-#endif
 
   // Unicast local delivery
   if (m_ipv4->IsDestinationAddress (dst, iif))
@@ -584,7 +397,6 @@ RoutingProtocol::BroadcastRoute (const Ipv4Header & hdr, Ptr<NetDevice> oif) con
   Ptr<Ipv4Route> rt = Create<Ipv4Route> ();
   rt->SetDestination (hdr.GetDestination ());
   rt->SetSource (src);
-  //rt->SetGateway (Ipv4Address::GetAny ());
   rt->SetGateway (Ipv4Address::GetBroadcast ());
   rt->SetOutputDevice (oif);
 
