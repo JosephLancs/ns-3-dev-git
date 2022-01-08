@@ -1,8 +1,14 @@
-#ifndef IPV4_ROUTING_HELPER_H
-#define IPV4_ROUTING_HELPER_H
+#ifndef ADNODE_H
+#define ADNODE_H
 
 #include "ns3/application.h"
 #include "ns3/wifi-phy.h"
+#include "ns3/packet.h"
+#include "ns3/ipv4-address.h"
+#include "ns3/simulator.h"
+#include <vector>
+
+
 
 namespace ns3
 {
@@ -13,23 +19,31 @@ namespace ns3
             virtual TypeId GetInstanceTypeId(void) const;
 
             Adnode();
-            ~Adnode();
+            //~Adnode();
 
             void StartApplication();
 
             void BroadcastInformation();
 
-            bool ReceivePacket(Ptr<NetDevice> device, Ptr<const Packet)> packet, uint16_t protocol, const Address &sender);
+            bool ReceivePacket(Ptr<NetDevice> device, Ptr<const Packet)> p, uint16_t protocol, const Address &sender);
 
-            void PromiscRx(Ptr<const Packet> packet, uint16_t channelFreq, WifiTxVector tx, MpduInfo mpdu, SignalNoiseDbm sn);
+            void PromiscRx(Ptr<const Packet> p, uint16_t channelFreq, WifiTxVector tx, MpduInfo mpdu, SignalNoiseDbm sn);
 
             void SetBroadcastInterval(Time interval);
 
             private:
+                void StartApplication();
                 Time m_broadcast_time;
                 uint32_t m_packetSize;
+
                 //Ptr<NetDevice> m_netDevice;
 
+                Time m_time_limit; //Time limit to keep neighbours in a list
 
-    }
+                WifiMode m_mode;
+
+
+    };
 }
+
+#endif
