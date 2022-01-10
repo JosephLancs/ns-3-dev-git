@@ -179,6 +179,12 @@ RoutingProtocol::RouteInput (Ptr<const Packet> p,
       return false;
     }
 
+  if (m_dpd.IsDuplicate (p, header))
+    {
+      NS_LOG_DEBUG ("Duplicated packet " << p->GetUid () << " from " << origin << ". Drop.");
+      return true;
+    }
+
   // Unicast local delivery
   if (m_ipv4->IsDestinationAddress (dst, iif))
     {
