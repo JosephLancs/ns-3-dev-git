@@ -258,6 +258,9 @@ RoutingExperiment::Run ()
   NodeContainer adhocNodes;
   adhocNodes.Create (m_nNodes);
 
+  NodeContainer adversaryNodes;
+  adversaryNodes.Create (1);
+
   // setting up wifi phy and channel using helpers
   WifiHelper wifi;
   wifi.SetStandard (WIFI_PHY_STANDARD_80211b);
@@ -279,6 +282,7 @@ RoutingExperiment::Run ()
 
   wifiMac.SetType ("ns3::AdhocWifiMac");
   NetDeviceContainer adhocDevices = wifi.Install (wifiPhy, wifiMac, adhocNodes);
+  NetDeviceContainer adversaryDevices = wifi.Install (wifiPhy, wifiMac, adversaryNodes);
 
   MobilityHelper mobilityAdhoc;
   int64_t streamIndex = 0; // used to get consistent mobility across scenarios
@@ -387,6 +391,13 @@ RoutingExperiment::Run ()
         << " will send packets to node " << target_id
         << " (" << adhocInterfaces.GetAddress (target_id) << ")");
     }
+
+
+  // Put Adnode on adversaryNodes
+  for (auto node : adversaryNodes)
+  {
+    node->AddApplication(CreateObject<AdNode> ());
+  }
 
   std::stringstream ss;
   ss << m_nNodes;
