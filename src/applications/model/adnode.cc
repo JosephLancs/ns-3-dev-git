@@ -11,7 +11,7 @@ namespace ns3
     TypeId Adnode::GetTypeId()
     {
         static TypeId tid = TypeId("ns3::Adnode")
-            .SetParent<Application()
+            .SetParent<Application>()
             .AddConstructor<Adnode>();
 
         return tid;
@@ -22,7 +22,15 @@ namespace ns3
         return Adnode::GetTypeId();
     }
 
+    Adnode::Adnode()
+    {
+        
+    }
 
+    void Adnode::StartApplication()
+    {
+
+    }
     
 
 
