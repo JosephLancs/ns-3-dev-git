@@ -21,26 +21,25 @@ namespace ns3
             Adnode();
             //~Adnode();
 
-            void StartApplication();
 
-            void BroadcastInformation();
+            void BroadcastInformation(void);
 
-            bool ReceivePacket(Ptr<NetDevice> device, Ptr<const Packet)> p, uint16_t protocol, const Address &sender);
+            bool ReceivePacket(Ptr<NetDevice> device, Ptr<const Packet> p, uint16_t protocol, const Address &sender);
 
             void PromiscRx(Ptr<const Packet> p, uint16_t channelFreq, WifiTxVector tx, MpduInfo mpdu, SignalNoiseDbm sn);
 
             void SetBroadcastInterval(Time interval);
 
-            private:
-                void StartApplication();
-                Time m_broadcast_time;
-                uint32_t m_packetSize;
+        private:
+            virtual void StartApplication(void);
+            Time m_broadcast_time;
+            uint32_t m_packetSize;
 
-                //Ptr<NetDevice> m_netDevice;
+            //Ptr<NetDevice> m_netDevice;
 
-                Time m_time_limit; //Time limit to keep neighbours in a list
+            Time m_time_limit; //Time limit to keep neighbours in a list
 
-                WifiMode m_mode;
+            //WifiMode m_mode;
 
 
     };
