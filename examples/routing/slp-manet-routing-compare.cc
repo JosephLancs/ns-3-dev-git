@@ -284,6 +284,8 @@ RoutingExperiment::Run ()
   NetDeviceContainer adhocDevices = wifi.Install (wifiPhy, wifiMac, adhocNodes);
   NetDeviceContainer adversaryDevices = wifi.Install (wifiPhy, wifiMac, adversaryNodes);
 
+  // TODO: adversaryDevices should be in promiscuous mode
+
   MobilityHelper mobilityAdhoc;
   int64_t streamIndex = 0; // used to get consistent mobility across scenarios
 
@@ -357,6 +359,9 @@ RoutingExperiment::Run ()
       internet.Install (adhocNodes);
     }
 
+  // ???
+  //internet.Install (adversaryNodes);
+
   NS_LOG_INFO ("Assigning IP address");
 
   Ipv4AddressHelper addressAdhoc;
@@ -391,7 +396,6 @@ RoutingExperiment::Run ()
         << " will send packets to node " << target_id
         << " (" << adhocInterfaces.GetAddress (target_id) << ")");
     }
-
 
   // Put Adnode on adversaryNodes
   for (auto node : adversaryNodes)

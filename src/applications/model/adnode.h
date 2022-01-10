@@ -19,19 +19,26 @@ namespace ns3
             virtual TypeId GetInstanceTypeId(void) const;
 
             Adnode();
-            //~Adnode();
+            virtual ~Adnode() = default;
 
+            //void BroadcastInformation(void);
 
-            void BroadcastInformation(void);
-
-            bool ReceivePacket(Ptr<NetDevice> device, Ptr<const Packet> p, uint16_t protocol, const Address &sender);
+            /*bool ReceivePacket(Ptr<NetDevice> device, Ptr<const Packet> p, uint16_t protocol, const Address &sender);
 
             void PromiscRx(Ptr<const Packet> p, uint16_t channelFreq, WifiTxVector tx, MpduInfo mpdu, SignalNoiseDbm sn);
 
-            void SetBroadcastInterval(Time interval);
+            void SetBroadcastInterval(Time interval);*/
 
         private:
             virtual void StartApplication(void);
+
+            bool ReceiveCallback(Ptr<NetDevice> netdev,
+                                 Ptr<const Packet> p,
+                                 uint16_t,
+                                 const Address &,
+                                 const Address &,
+                                 enum PacketType);
+
             Time m_broadcast_time;
             uint32_t m_packetSize;
 

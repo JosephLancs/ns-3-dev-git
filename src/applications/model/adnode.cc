@@ -24,14 +24,26 @@ namespace ns3
 
     Adnode::Adnode()
     {
-        
+        NS_LOG_FUNCTION (this);
+    }
+
+    bool Adnode::ReceiveCallback(Ptr<NetDevice> netdev,
+                                 Ptr<const Packet> p,
+                                 uint16_t,
+                                 const Address &,
+                                 const Address &,
+                                 enum PacketType)
+    {
+        NS_LOG_FUNCTION (this);
+
+        //TODO: print this out
     }
 
     void Adnode::StartApplication()
     {
+        NS_LOG_FUNCTION (this);
 
+        //for each netdevice
+        // netdevice->SetPromiscReceiveCallback(PromiscReceiveCallback(Adnode::ReceiveCalback));
     }
-    
-
-
 }
