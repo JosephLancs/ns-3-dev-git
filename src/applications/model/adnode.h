@@ -32,12 +32,12 @@ namespace ns3
         private:
             virtual void StartApplication(void);
 
-            bool ReceiveCallback(Ptr<NetDevice> netdev,
+            /*bool ReceiveCallback(Ptr<NetDevice> netdev,
                                  Ptr<const Packet> p,
                                  uint16_t,
                                  const Address &,
                                  const Address &,
-                                 enum PacketType);
+                                 enum PacketType);*/
 
             Time m_broadcast_time;
             uint32_t m_packetSize;

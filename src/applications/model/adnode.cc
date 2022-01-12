@@ -27,7 +27,7 @@ namespace ns3
         NS_LOG_FUNCTION (this);
     }
 
-    bool Adnode::ReceiveCallback(Ptr<NetDevice> netdev,
+    /*bool Adnode::ReceiveCallback(Ptr<NetDevice> netdev,
                                  Ptr<const Packet> p,
                                  uint16_t,
                                  const Address &,
@@ -37,7 +37,7 @@ namespace ns3
         NS_LOG_FUNCTION (this);
 
         //TODO: print this out
-    }
+    }*/
 
     void Adnode::StartApplication()
     {
