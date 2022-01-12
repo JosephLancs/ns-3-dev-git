@@ -53,9 +53,8 @@ namespace ns3
         {
             Ptr<NetDevice> dev = n->GetDevice (i);
             dev->SetPromiscReceiveCallback(MakeCallback(&Adnode::ReceivePacket, this));
-            
-           
         }
+
         Simulator::Schedule(Seconds(1), &Adnode::Move, this);
     }
 }
