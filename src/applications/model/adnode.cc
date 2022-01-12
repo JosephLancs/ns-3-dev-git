@@ -27,23 +27,35 @@ namespace ns3
         NS_LOG_FUNCTION (this);
     }
 
-    /*bool Adnode::ReceiveCallback(Ptr<NetDevice> netdev,
-                                 Ptr<const Packet> p,
-                                 uint16_t,
-                                 const Address &,
-                                 const Address &,
-                                 enum PacketType)
-    {
-        NS_LOG_FUNCTION (this);
 
-        //TODO: print this out
-    }*/
+    void Adnode::Move()
+    {
+        
+    }
+
+    bool Adnode::ReceivePacket(Ptr<NetDevice> device,
+                               Ptr<const Packet> packet,
+                               uint16_t protocol,
+                               const Address &from,
+                               const Address &to,
+                               NetDevice::PacketType packetType)
+    {
+        NS_LOG_FUNCTION(this << "Receive adnode: " << packet);
+        return false;
+    }
 
     void Adnode::StartApplication()
     {
         NS_LOG_FUNCTION (this);
 
-        //for each netdevice
-        // netdevice->SetPromiscReceiveCallback(PromiscReceiveCallback(Adnode::ReceiveCalback));
+        Ptr<Node> n = GetNode ();
+        for (uint32_t i = 0; i < n->GetNDevices (); i++)
+        {
+            Ptr<NetDevice> dev = n->GetDevice (i);
+            dev->SetPromiscReceiveCallback(MakeCallback(&Adnode::ReceivePacket, this));
+            
+           
+        }
+        Simulator::Schedule(Seconds(1), &Adnode::Move, this);
     }
 }
