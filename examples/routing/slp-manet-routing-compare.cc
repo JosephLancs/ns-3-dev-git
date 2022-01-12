@@ -78,11 +78,12 @@
 #include "ns3/dsr-module.h"
 #include "ns3/applications-module.h"
 #include "ns3/yans-wifi-helper.h"
+#include "ns3/adnode.h"
 
 using namespace ns3;
 using namespace dsr;
 
-NS_LOG_COMPONENT_DEFINE ("manet-routing-compare");
+NS_LOG_COMPONENT_DEFINE ("slp-manet-routing-compare");
 
 class RoutingExperiment
 {
@@ -122,7 +123,7 @@ RoutingExperiment::RoutingExperiment ()
   : port (9), // Discard port (RFC 863)
     bytesTotal (0),
     packetsReceived (0),
-    m_CSVfileName ("manet-routing.output.csv"),
+    m_CSVfileName ("slp-manet-routing.output.csv"),
     m_nSinks (1),
     m_nNodes (100),
     m_protocolName(""),
@@ -245,7 +246,7 @@ RoutingExperiment::Run ()
   std::string rate ("2048bps");
   uint32_t packet_size (64);
   std::string phyMode ("DsssRate11Mbps");
-  std::string tr_name ("manet-routing-compare");
+  std::string tr_name ("slp-manet-routing-compare");
   int nodeSpeed = 20; //in m/s
   int nodePause = 0; //in s
 
@@ -398,10 +399,16 @@ RoutingExperiment::Run ()
     }
 
   // Put Adnode on adversaryNodes
-  for (auto node : adversaryNodes)
+  /*for (auto node : adversaryNodes)
   {
     node->AddApplication(CreateObject<AdNode> ());
-  }
+  }*/
+  for(NodeContainer::Iterator n = adversaryNodes.Begin (); n != adversaryNodes.End (); n++)
+    {
+    Ptr<Node> object = *n;
+    object->AddApplication(CreateObject<Adnode> ());
+    //std::cout <<"Node Number "<< id << std::endl;
+    } 
 
   std::stringstream ss;
   ss << m_nNodes;
