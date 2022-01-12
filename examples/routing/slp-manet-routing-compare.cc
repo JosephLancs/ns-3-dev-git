@@ -241,6 +241,7 @@ main (int argc, char *argv[])
 void
 RoutingExperiment::Run ()
 {
+  NS_LOG_DEBUG("begin running");
   Packet::EnablePrinting ();
 
   std::string rate ("2048bps");
@@ -273,7 +274,6 @@ RoutingExperiment::Run ()
   wifiPhy.SetChannel (wifiChannel.Create ());
 
   // Add a mac and disable rate control
-  WifiMacHelper wifiMac;
   wifi.SetRemoteStationManager ("ns3::ConstantRateWifiManager",
                                 "DataMode", StringValue (phyMode),
                                 "ControlMode", StringValue (phyMode));
@@ -281,11 +281,27 @@ RoutingExperiment::Run ()
   wifiPhy.Set ("TxPowerStart", DoubleValue (m_txp));
   wifiPhy.Set ("TxPowerEnd", DoubleValue (m_txp));
 
+  WifiMacHelper wifiMac;
   wifiMac.SetType ("ns3::AdhocWifiMac");
+
   NetDeviceContainer adhocDevices = wifi.Install (wifiPhy, wifiMac, adhocNodes);
-  NetDeviceContainer adversaryDevices = wifi.Install (wifiPhy, wifiMac, adversaryNodes);
+
+  WifiMacHelper wifiMacAdversary;
+  //wifiMacAdversary.SetType ("ns3::AdhocWifiMac", "Promisc", EmptyAttributeValue ());
+  wifiMacAdversary.SetType ("ns3::AdhocWifiMac");
+
+  NetDeviceContainer adversaryDevices = wifi.Install (wifiPhy, wifiMacAdversary, adversaryNodes);
 
   // TODO: adversaryDevices should be in promiscuous mode
+
+  /*for(NodeContainer::Iterator n = adversaryDevices.Begin (); n != adversary.End (); n++)
+  {
+    Ptr<Node> object = *n;
+    object->AddApplication(CreateObject<Adnode> ());
+  } */
+  
+
+
 
   MobilityHelper mobilityAdhoc;
   int64_t streamIndex = 0; // used to get consistent mobility across scenarios
@@ -321,6 +337,8 @@ RoutingExperiment::Run ()
   InternetStackHelper internet;
   
   const int16_t priority = 100;
+
+  NS_LOG_DEBUG("choose protocol");
 
   switch (m_protocol)
     {
@@ -361,13 +379,23 @@ RoutingExperiment::Run ()
     }
 
   // ???
-  //internet.Install (adversaryNodes);
+  internet.Install (adversaryNodes);
 
   NS_LOG_INFO ("Assigning IP address");
 
   Ipv4AddressHelper addressAdhoc;
-  addressAdhoc.SetBase ("10.0.0.0", "255.255.255.0");
+  addressAdhoc.SetBase ("11.0.0.0", "255.255.255.0");
   Ipv4InterfaceContainer adhocInterfaces = addressAdhoc.Assign (adhocDevices);
+
+  NS_LOG_DEBUG("setbase for adhoc");
+
+  /*Ipv4AddressHelper addressAdversary;
+  addressAdversary.SetBase ("10.0.0.0", "255.255.255.0");
+  Ipv4InterfaceContainer adversaryInterfaces = addressAdversary.Assign(adversaryDevices);*/
+
+  NS_LOG_DEBUG("set base for adversary");
+
+
 
   Ptr<UniformRandomVariable> rnd = CreateObject<UniformRandomVariable> ();
 
@@ -398,17 +426,11 @@ RoutingExperiment::Run ()
         << " (" << adhocInterfaces.GetAddress (target_id) << ")");
     }
 
-  // Put Adnode on adversaryNodes
-  /*for (auto node : adversaryNodes)
-  {
-    node->AddApplication(CreateObject<AdNode> ());
-  }*/
   for(NodeContainer::Iterator n = adversaryNodes.Begin (); n != adversaryNodes.End (); n++)
-    {
+  {
     Ptr<Node> object = *n;
     object->AddApplication(CreateObject<Adnode> ());
-    //std::cout <<"Node Number "<< id << std::endl;
-    } 
+  }
 
   std::stringstream ss;
   ss << m_nNodes;
@@ -426,19 +448,8 @@ RoutingExperiment::Run ()
   ss4 << rate;
   std::string sRate = ss4.str ();
 
-  //NS_LOG_INFO ("Configure Tracing.");
-  //tr_name = tr_name + "_" + m_protocolName +"_" + nodes + "nodes_" + sNodeSpeed + "speed_" + sNodePause + "pause_" + sRate + "rate";
-
-  //AsciiTraceHelper ascii;
-  //Ptr<OutputStreamWrapper> osw = ascii.CreateFileStream ( (tr_name + ".tr").c_str());
-  //wifiPhy.EnableAsciiAll (osw);
   AsciiTraceHelper ascii;
   MobilityHelper::EnableAsciiAll (ascii.CreateFileStream (tr_name + ".mob"));
-
-  //Ptr<FlowMonitor> flowmon;
-  //FlowMonitorHelper flowmonHelper;
-  //flowmon = flowmonHelper.InstallAll ();
-
 
   NS_LOG_INFO ("Run Simulation.");
 
@@ -446,8 +457,6 @@ RoutingExperiment::Run ()
 
   Simulator::Stop (m_total_time);
   Simulator::Run ();
-
-  //flowmon->SerializeToXmlFile ((tr_name + ".flowmon").c_str(), false, false);
 
   Simulator::Destroy ();
 }
