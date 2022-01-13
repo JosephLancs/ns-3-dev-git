@@ -286,6 +286,9 @@ RoutingExperiment::Run ()
   NetDeviceContainer adversaryDevices = wifi.Install (wifiPhy, wifiMac, adversaryNodes);
 
   MobilityHelper mobilityAdhoc;
+
+  MobilityHelper mobilityAdversary; // CHANGE THIS
+
   int64_t streamIndex = 0; // used to get consistent mobility across scenarios
 
   ObjectFactory pos;
@@ -308,6 +311,16 @@ RoutingExperiment::Run ()
   mobilityAdhoc.Install (adhocNodes);
   streamIndex += mobilityAdhoc.AssignStreams (adhocNodes, streamIndex);
   NS_UNUSED (streamIndex); // From this point, streamIndex is unused
+
+  //change this too
+  mobilityAdversary.SetMobilityModel ("ns3::RandomWaypointMobilityModel",
+                                  "Speed", StringValue (ssSpeed.str ()),
+                                  "Pause", StringValue (ssPause.str ()),
+                                  "PositionAllocator", PointerValue (taPositionAlloc));
+  mobilityAdversary.SetPositionAllocator (taPositionAlloc);
+  mobilityAdversary.Install (adversaryNodes);
+  //streamIndex += mobilityAdversary.AssignStreams (adhocNodes, streamIndex);
+
 
   AodvHelper aodv;
   OlsrHelper olsr;
@@ -360,6 +373,12 @@ RoutingExperiment::Run ()
       internet.Install (adhocNodes);
     }
 
+  for(NodeContainer::Iterator n = adversaryNodes.Begin (); n != adversaryNodes.End (); n++)
+  {
+    Ptr<Node> object = *n;
+    object->AddApplication(CreateObject<Adnode> ());
+  }
+
   internet.Install (adversaryNodes);
 
   NS_LOG_INFO ("Assigning IP address");
@@ -405,11 +424,6 @@ RoutingExperiment::Run ()
         << " (" << adhocInterfaces.GetAddress (target_id) << ")");
     }
 
-  for(NodeContainer::Iterator n = adversaryNodes.Begin (); n != adversaryNodes.End (); n++)
-  {
-    Ptr<Node> object = *n;
-    object->AddApplication(CreateObject<Adnode> ());
-  }
 
   std::stringstream ss;
   ss << m_nNodes;
