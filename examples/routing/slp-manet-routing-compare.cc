@@ -108,6 +108,7 @@ private:
   std::string m_CSVfileName;
   int m_nSinks;
   int m_nNodes;
+  int m_aNodes;
   std::string m_protocolName;
   double m_txp;
   bool m_traceMobility;
@@ -126,6 +127,7 @@ RoutingExperiment::RoutingExperiment ()
     m_CSVfileName ("slp-manet-routing.output.csv"),
     m_nSinks (1),
     m_nNodes (100),
+    m_aNodes(3),
     m_protocolName(""),
     m_txp (7.5),
     m_traceMobility (false),
@@ -261,7 +263,7 @@ RoutingExperiment::Run ()
   adhocNodes.Create (m_nNodes);
 
   NodeContainer adversaryNodes;
-  adversaryNodes.Create (1);
+  adversaryNodes.Create (m_aNodes);
 
   // setting up wifi phy and channel using helpers
   WifiHelper wifi;
@@ -313,14 +315,18 @@ RoutingExperiment::Run ()
   NS_UNUSED (streamIndex); // From this point, streamIndex is unused
 
   //change this too
-  mobilityAdversary.SetMobilityModel ("ns3::RandomWaypointMobilityModel",
-                                  "Speed", StringValue (ssSpeed.str ()),
-                                  "Pause", StringValue (ssPause.str ()),
-                                  "PositionAllocator", PointerValue (taPositionAlloc));
+
+  mobilityAdversary.SetMobilityModel ("ns3::AdversaryMobilityModel");
+  //mobilityAdversary.SetMobilityModel ("ns3::RandomWaypointMobilityModel",
+  //                                "Speed", StringValue (ssSpeed.str ()),
+  //                                "Pause", StringValue (ssPause.str ()),
+  //                                "PositionAllocator", PointerValue (taPositionAlloc));
   mobilityAdversary.SetPositionAllocator (taPositionAlloc);
   mobilityAdversary.Install (adversaryNodes);
-  //streamIndex += mobilityAdversary.AssignStreams (adhocNodes, streamIndex);
 
+  Ptr<AdversaryMobilityModel> adversaryMob;
+  NS_LOG_DEBUG("admob: " << adversaryNodes.Get(m_aNodes));
+  //adversaryMob = adversaryNodes.Get(m_aNodes)->GetObject<AdversaryMobilityModel>();
 
   AodvHelper aodv;
   OlsrHelper olsr;
