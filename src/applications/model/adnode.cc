@@ -8,6 +8,8 @@ namespace ns3
     NS_LOG_COMPONENT_DEFINE("Adnode");
     NS_OBJECT_ENSURE_REGISTERED(Adnode);
 
+
+
     TypeId Adnode::GetTypeId()
     {
         static TypeId tid = TypeId("ns3::Adnode")
@@ -27,12 +29,6 @@ namespace ns3
         NS_LOG_FUNCTION (this);
     }
 
-
-    void Adnode::Move()
-    {
-        
-    }
-
     bool Adnode::ReceivePacket(Ptr<NetDevice> device,
                                Ptr<const Packet> packet,
                                uint16_t protocol,
@@ -40,9 +36,33 @@ namespace ns3
                                const Address &to,
                                NetDevice::PacketType packetType)
     {
+
         NS_LOG_FUNCTION(this << "Receive adnode: " << packet);
+
+        //TODO: consider packet filtering
+
+        Ptr<AdversaryMobilityModel> mob = GetObject<AdversaryMobilityModel>();
+
+        //error logging for null node from address
+        Ptr<Node> n = GetNodeFromAddress(from);
+        Ptr<MobilityModel> mobAdhoc = n->GetObject<MobilityModel>();
+
+        Vector adPosition = mobAdhoc->GetPosition();
+
+        mob->SetTarget(adPosition); //write this function
+        
+
         return false;
     }
+
+    Ptr<Node> Adnode::GetNodeFromAddress(const Address &from)
+    {
+        NodeContainer nodes = NodeContainer::GetGlobal();
+        //interate over all nodes, then interate over all netdevices the nodes have check if that netdevice has this address
+        return NULL;
+
+    }
+
 
     void Adnode::StartApplication()
     {
