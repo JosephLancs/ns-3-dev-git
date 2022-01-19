@@ -266,44 +266,29 @@ RoutingExperiment::Run ()
   // setting up wifi phy and channel using helpers
   WifiHelper wifi;
   wifi.SetStandard (WIFI_PHY_STANDARD_80211b);
+  wifi.SetRemoteStationManager ("ns3::ConstantRateWifiManager",
+                                "DataMode", StringValue (phyMode),
+                                "ControlMode", StringValue (phyMode));
 
   YansWifiPhyHelper wifiPhy = YansWifiPhyHelper::Default ();
+  wifiPhy.Set ("TxPowerStart", DoubleValue (m_txp));
+  wifiPhy.Set ("TxPowerEnd", DoubleValue (m_txp));
+
   YansWifiChannelHelper wifiChannel;
   wifiChannel.SetPropagationDelay ("ns3::ConstantSpeedPropagationDelayModel");
   wifiChannel.AddPropagationLoss ("ns3::FriisPropagationLossModel");
   wifiPhy.SetChannel (wifiChannel.Create ());
 
-  // Add a mac and disable rate control
-  wifi.SetRemoteStationManager ("ns3::ConstantRateWifiManager",
-                                "DataMode", StringValue (phyMode),
-                                "ControlMode", StringValue (phyMode));
-
-  wifiPhy.Set ("TxPowerStart", DoubleValue (m_txp));
-  wifiPhy.Set ("TxPowerEnd", DoubleValue (m_txp));
-
   WifiMacHelper wifiMac;
   wifiMac.SetType ("ns3::AdhocWifiMac");
 
   NetDeviceContainer adhocDevices = wifi.Install (wifiPhy, wifiMac, adhocNodes);
-
-  WifiMacHelper wifiMacAdversary;
-  //wifiMacAdversary.SetType ("ns3::AdhocWifiMac", "Promisc", EmptyAttributeValue ());
-  wifiMacAdversary.SetType ("ns3::AdhocWifiMac");
-
-  NetDeviceContainer adversaryDevices = wifi.Install (wifiPhy, wifiMacAdversary, adversaryNodes);
-
-  // TODO: adversaryDevices should be in promiscuous mode
-
-  /*for(NodeContainer::Iterator n = adversaryDevices.Begin (); n != adversary.End (); n++)
-  {
-    Ptr<Node> object = *n;
-    object->AddApplication(CreateObject<Adnode> ());
-  } */
-  
-
-
+  NetDeviceContainer adversaryDevices = wifi.Install (wifiPhy, wifiMac, adversaryNodes);
 
   MobilityHelper mobilityAdhoc;
+
+  MobilityHelper mobilityAdversary; // CHANGE THIS
+
   int64_t streamIndex = 0; // used to get consistent mobility across scenarios
 
   ObjectFactory pos;
@@ -326,6 +311,16 @@ RoutingExperiment::Run ()
   mobilityAdhoc.Install (adhocNodes);
   streamIndex += mobilityAdhoc.AssignStreams (adhocNodes, streamIndex);
   NS_UNUSED (streamIndex); // From this point, streamIndex is unused
+
+  //change this too
+  mobilityAdversary.SetMobilityModel ("ns3::RandomWaypointMobilityModel",
+                                  "Speed", StringValue (ssSpeed.str ()),
+                                  "Pause", StringValue (ssPause.str ()),
+                                  "PositionAllocator", PointerValue (taPositionAlloc));
+  mobilityAdversary.SetPositionAllocator (taPositionAlloc);
+  mobilityAdversary.Install (adversaryNodes);
+  //streamIndex += mobilityAdversary.AssignStreams (adhocNodes, streamIndex);
+
 
   AodvHelper aodv;
   OlsrHelper olsr;
@@ -378,13 +373,18 @@ RoutingExperiment::Run ()
       internet.Install (adhocNodes);
     }
 
-  // ???
+  for(NodeContainer::Iterator n = adversaryNodes.Begin (); n != adversaryNodes.End (); n++)
+  {
+    Ptr<Node> object = *n;
+    object->AddApplication(CreateObject<Adnode> ());
+  }
+
   internet.Install (adversaryNodes);
 
   NS_LOG_INFO ("Assigning IP address");
 
   Ipv4AddressHelper addressAdhoc;
-  addressAdhoc.SetBase ("11.0.0.0", "255.255.255.0");
+  addressAdhoc.SetBase ("10.0.0.0", "255.255.255.0");
   Ipv4InterfaceContainer adhocInterfaces = addressAdhoc.Assign (adhocDevices);
 
   NS_LOG_DEBUG("setbase for adhoc");
@@ -393,9 +393,7 @@ RoutingExperiment::Run ()
   addressAdversary.SetBase ("10.0.0.0", "255.255.255.0");
   Ipv4InterfaceContainer adversaryInterfaces = addressAdversary.Assign(adversaryDevices);*/
 
-  NS_LOG_DEBUG("set base for adversary");
-
-
+  //NS_LOG_DEBUG("set base for adversary");
 
   Ptr<UniformRandomVariable> rnd = CreateObject<UniformRandomVariable> ();
 
@@ -426,11 +424,6 @@ RoutingExperiment::Run ()
         << " (" << adhocInterfaces.GetAddress (target_id) << ")");
     }
 
-  for(NodeContainer::Iterator n = adversaryNodes.Begin (); n != adversaryNodes.End (); n++)
-  {
-    Ptr<Node> object = *n;
-    object->AddApplication(CreateObject<Adnode> ());
-  }
 
   std::stringstream ss;
   ss << m_nNodes;
