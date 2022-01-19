@@ -393,7 +393,12 @@ RoutingExperiment::Run ()
   addressAdversary.SetBase ("10.0.0.0", "255.255.255.0");
   Ipv4InterfaceContainer adversaryInterfaces = addressAdversary.Assign(adversaryDevices);*/
 
+<<<<<<< Updated upstream
   //NS_LOG_DEBUG("set base for adversary");
+=======
+  NS_LOG_DEBUG("set base for adversary");
+
+>>>>>>> Stashed changes
 
   Ptr<UniformRandomVariable> rnd = CreateObject<UniformRandomVariable> ();
 
