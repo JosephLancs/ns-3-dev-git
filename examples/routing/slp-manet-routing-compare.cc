@@ -355,8 +355,8 @@ RoutingExperiment::Run ()
       m_protocolName = "DSDV";
       break;
     case 4:
-      m_protocolName = "FLOODING";
       list.Add(flood, priority);
+      m_protocolName = "FLOODING";
       break;
     case 5:
       m_protocolName = "DSR";
