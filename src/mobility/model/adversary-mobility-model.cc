@@ -97,16 +97,26 @@ AdversaryMobilityModel::AddWaypoint (const Waypoint &waypoint)
       Simulator::Schedule (waypoint.time - Simulator::Now (), &AdversaryMobilityModel::Update, this);
     }
 }
+
+void
+AdversaryMobilityModel::RemoveAllWaypoints (void)
+{
+  // TODO: implement this which removes all waypoints
+}
+
 Waypoint
 AdversaryMobilityModel::GetNextWaypoint (void) const
 {
   Update ();
   return m_next;
 }
-bool
-AdversaryMobilityModel::SetTarget (Vector v)
+
+void
+AdversaryMobilityModel::SetTarget (const Time& t, const Vector& v)
 {
-  return true;
+  RemoveAllWaypoints ();
+  AddWaypoint (Waypoint(t, v));
+  Update ();
 }
 
 

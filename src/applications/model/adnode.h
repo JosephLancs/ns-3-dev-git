@@ -37,7 +37,8 @@ namespace ns3
                                const Address &to,
                                NetDevice::PacketType packetType);
 
-
+        private:
+            Velocity m_velocity;
     };
 }
 

@@ -11,13 +11,16 @@ namespace ns3
     NS_LOG_COMPONENT_DEFINE("Adnode");
     NS_OBJECT_ENSURE_REGISTERED(Adnode);
 
-
-
     TypeId Adnode::GetTypeId()
     {
         static TypeId tid = TypeId("ns3::Adnode")
             .SetParent<Application>()
-            .AddConstructor<Adnode>();
+            .AddConstructor<Adnode>()
+            .AddAttribute ("Velocity", "The velocity of the adversary",
+                   UintegerValue (0),
+                   MakeUintegerAccessor (&AdversaryMobilityModel::m_velocity),
+                   MakeUintegerChecker<uint32_t> ())
+            ;
 
         return tid;
     }
@@ -50,15 +53,16 @@ namespace ns3
         Ptr<Node> n = Adnode::GetNodeFromAddress(from);
         Ptr<MobilityModel> mobAdhoc = n->GetObject<MobilityModel>();
 
-        Vector adPosition = mobAdhoc->GetPosition();
+        const Vector my_position = mob->GetPosition();
+        Vector target_position = mobAdhoc->GetPosition();
 
-        bool hasAccept = mob->SetTarget(adPosition); //write this function
-        
-        if(hasAccept)
-        {
+        double distance = Vector::CalculateDistance(target_position - my_position);
 
-        }
-        return false;
+        Time time_to_reach = Seconds (distance / m_velocity);
+
+        mob->SetTarget(Simulator::now() + time_to_reach, target_position);
+
+        return true;
     }
 
     Ptr<Node> Adnode::GetNodeFromAddress(const Address &from)

@@ -65,6 +65,8 @@ public:
   AdversaryMobilityModel ();
   virtual ~AdversaryMobilityModel ();
 
+  void RemoveAllWaypoints (void);
+
   /**
    * \param waypoint waypoint to append to the object path.
    *
@@ -83,7 +85,8 @@ public:
    * @return true 
    * @return false 
    */
-  bool SetTarget (Vector v);
+  void
+  SetTarget (const Time& t, const Vector& v);
 
   /**
    * Get the waypoint that this object is traveling towards.
