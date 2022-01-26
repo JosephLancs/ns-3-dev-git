@@ -32,7 +32,13 @@ namespace ns3 {
 NS_LOG_COMPONENT_DEFINE ("AdversaryMobilityModel");
 
 NS_OBJECT_ENSURE_REGISTERED (AdversaryMobilityModel);
-
+/*
+ * 
+ * 
+ * rather than a list of waypoints, have a single target
+ * 
+ *
+ */
 TypeId
 AdversaryMobilityModel::GetTypeId (void)
 {
@@ -102,6 +108,8 @@ void
 AdversaryMobilityModel::RemoveAllWaypoints (void)
 {
   // TODO: implement this which removes all waypoints
+  m_waypoints.clear ();
+  m_first = true;
 }
 
 Waypoint
@@ -223,6 +231,7 @@ AdversaryMobilityModel::EndMobility (void)
   m_next.time = m_current.time;
   m_first = true;
 }
+
 Vector
 AdversaryMobilityModel::DoGetVelocity (void) const
 {

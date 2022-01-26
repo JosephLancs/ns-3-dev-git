@@ -229,7 +229,7 @@ main (int argc, char *argv[])
   std::ofstream out (experiment.GetCSVFileName().c_str ());
   out << "SimulationSecond," <<
   "ReceiveRate," <<
-  "PacketsReceived," <<
+  "PacketsReceivmoed," <<
   "NumberOfSinks," <<
   "NumberOfNodes," <<
   "RoutingProtocol," <<
@@ -382,7 +382,7 @@ RoutingExperiment::Run ()
   for(NodeContainer::Iterator n = adversaryNodes.Begin (); n != adversaryNodes.End (); n++)
   {
     Ptr<Node> object = *n;
-    object->AddApplication(CreateObject<Adnode> (adhocNodes));
+    object->AddApplication(CreateObject<Adnode> ());
   }
 
   internet.Install (adversaryNodes);

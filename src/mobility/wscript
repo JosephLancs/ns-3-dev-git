@@ -17,10 +17,10 @@ def build(bld):
         'model/random-walk-2d-mobility-model.cc',
         'model/random-waypoint-mobility-model.cc',
         'model/rectangle.cc',
-        'model/adversary-mobility-model.cc',
         'model/steady-state-random-waypoint-mobility-model.cc',
         'model/waypoint.cc',
         'model/waypoint-mobility-model.cc',
+        'model/adversary-mobility-model.cc',
         'helper/mobility-helper.cc',
         'helper/ns2-mobility-helper.cc',
         ]
@@ -49,7 +49,6 @@ def build(bld):
         'model/hierarchical-mobility-model.h',
         'model/mobility-model.h',
         'model/position-allocator.h',
-        'model/adversary-mobility-model.h',
         'model/rectangle.h',
         'model/random-direction-2d-mobility-model.h',
         'model/random-walk-2d-mobility-model.h',
@@ -57,6 +56,7 @@ def build(bld):
         'model/steady-state-random-waypoint-mobility-model.h',
         'model/waypoint.h',
         'model/waypoint-mobility-model.h',
+        'model/adversary-mobility-model.h',
         'helper/mobility-helper.h',
         'helper/ns2-mobility-helper.h',
         ]

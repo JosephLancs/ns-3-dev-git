@@ -27,8 +27,6 @@ namespace ns3
             virtual void StartApplication(void);
 
             Ptr<Node> GetNodeFromAddress(const Address &from);
-            
-            void Move(void);
 
             bool ReceivePacket(Ptr<NetDevice> device,
                                Ptr<const Packet> packet,
@@ -38,7 +36,7 @@ namespace ns3
                                NetDevice::PacketType packetType);
 
         private:
-            Velocity m_velocity;
+            uint32_t m_velocity;
     };
 }
 

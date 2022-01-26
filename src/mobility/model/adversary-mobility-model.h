@@ -103,7 +103,8 @@ public:
    * Clear any existing waypoints and set the current waypoint
    * time to infinity. Calling this is only an optimization and
    * not required. After calling this function, adding waypoints
-   * behaves as it would for a new object.
+   * behaves as it woul
+d for a new object.
    */
   void EndMobility (void);
 

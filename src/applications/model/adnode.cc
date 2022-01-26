@@ -5,6 +5,7 @@
 #include "ns3/vector.h"
 #include "ns3/node.h"
 #include "adnode.h"
+#include "ns3/uinteger.h"
 
 namespace ns3
 {
@@ -18,7 +19,7 @@ namespace ns3
             .AddConstructor<Adnode>()
             .AddAttribute ("Velocity", "The velocity of the adversary",
                    UintegerValue (0),
-                   MakeUintegerAccessor (&AdversaryMobilityModel::m_velocity),
+                   MakeUintegerAccessor (&Adnode::m_velocity),
                    MakeUintegerChecker<uint32_t> ())
             ;
 
@@ -56,11 +57,11 @@ namespace ns3
         const Vector my_position = mob->GetPosition();
         Vector target_position = mobAdhoc->GetPosition();
 
-        double distance = Vector::CalculateDistance(target_position - my_position);
+        double distance = CalculateDistance(target_position, my_position);
 
         Time time_to_reach = Seconds (distance / m_velocity);
 
-        mob->SetTarget(Simulator::now() + time_to_reach, target_position);
+        mob->SetTarget(Simulator::Now() + time_to_reach, target_position);
 
         return true;
     }
@@ -72,19 +73,17 @@ namespace ns3
         for(NodeContainer::Iterator n = nodes.Begin (); n != nodes.End (); n++)
         {
             Ptr<Node> object = *n;
-            if(object->GetDevice(1)->GetAddress() == from)
+            uint32_t num = object->GetNDevices();
+            for(uint32_t i=0; i<num; i++)
             {
-                return object;
+                if(object->GetDevice(i)->GetAddress() == from)
+                {
+                    return object;
+                }
             }
         } 
         
         return NULL;
-
-    }
-
-    void Adnode::Move(void)
-    {
-        
     }
 
 
@@ -99,6 +98,5 @@ namespace ns3
             dev->SetPromiscReceiveCallback(MakeCallback(&Adnode::ReceivePacket, this));
         }
 
-        Simulator::Schedule(Seconds(1), &Adnode::Move, this);
     }
 }
