@@ -77,6 +77,15 @@ public:
   void AddWaypoint (const Waypoint &waypoint);
 
   /**
+   * @brief Set the Target object
+   * 
+   * @param v vector of target
+   * @return true 
+   * @return false 
+   */
+  bool SetTarget (Vector v);
+
+  /**
    * Get the waypoint that this object is traveling towards.
    */
   Waypoint GetNextWaypoint (void) const;

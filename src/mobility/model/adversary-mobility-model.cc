@@ -103,6 +103,13 @@ AdversaryMobilityModel::GetNextWaypoint (void) const
   Update ();
   return m_next;
 }
+bool
+AdversaryMobilityModel::SetTarget (Vector v)
+{
+  return true;
+}
+
+
 uint32_t
 AdversaryMobilityModel::WaypointsLeft (void) const
 {

@@ -25,6 +25,8 @@ namespace ns3
 
         private:
             virtual void StartApplication(void);
+
+            Ptr<Node> GetNodeFromAddress(const Address &from);
             
             void Move(void);
 
