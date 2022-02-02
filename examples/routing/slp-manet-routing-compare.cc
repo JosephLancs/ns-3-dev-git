@@ -77,6 +77,7 @@
 #include "ns3/dsdv-module.h"
 #include "ns3/dsr-module.h"
 #include "ns3/applications-module.h"
+#include "ns3/netanim-module.h"
 #include "ns3/yans-wifi-helper.h"
 #include "ns3/adnode.h"
 
@@ -259,6 +260,10 @@ RoutingExperiment::Run ()
   //Set Non-unicastMode rate to unicast mode
   Config::SetDefault ("ns3::WifiRemoteStationManager::NonUnicastMode", StringValue (phyMode));
 
+  //TODO: adnode velocity
+  Config::SetDefault ("ns3::Adnode::Velocity", UintegerValue(1));
+  
+
   NodeContainer adhocNodes;
   adhocNodes.Create (m_nNodes);
 
@@ -286,6 +291,8 @@ RoutingExperiment::Run ()
 
   NetDeviceContainer adhocDevices = wifi.Install (wifiPhy, wifiMac, adhocNodes);
   NetDeviceContainer adversaryDevices = wifi.Install (wifiPhy, wifiMac, adversaryNodes);
+
+
 
   MobilityHelper mobilityAdhoc;
 
@@ -315,7 +322,6 @@ RoutingExperiment::Run ()
   NS_UNUSED (streamIndex); // From this point, streamIndex is unused
 
   //change this too
-
   mobilityAdversary.SetMobilityModel ("ns3::AdversaryMobilityModel");
   //mobilityAdversary.SetMobilityModel ("ns3::RandomWaypointMobilityModel",
   //                                "Speed", StringValue (ssSpeed.str ()),
@@ -325,8 +331,9 @@ RoutingExperiment::Run ()
   mobilityAdversary.Install (adversaryNodes);
 
   Ptr<AdversaryMobilityModel> adversaryMob;
-  NS_LOG_DEBUG("admob: " << adversaryNodes.Get(m_aNodes));
+  NS_LOG_DEBUG("admob: " << adversaryNodes.Get(m_aNodes-1));
   //adversaryMob = adversaryNodes.Get(m_aNodes)->GetObject<AdversaryMobilityModel>();
+
 
   AodvHelper aodv;
   OlsrHelper olsr;
@@ -339,6 +346,7 @@ RoutingExperiment::Run ()
   
   const int16_t priority = 100;
 
+  NS_LOG_DEBUG("j");
   NS_LOG_DEBUG("choose protocol");
 
   switch (m_protocol)
@@ -379,24 +387,31 @@ RoutingExperiment::Run ()
       internet.Install (adhocNodes);
     }
 
+  NS_LOG_DEBUG("a");
+
   for(NodeContainer::Iterator n = adversaryNodes.Begin (); n != adversaryNodes.End (); n++)
   {
     Ptr<Node> object = *n;
     object->AddApplication(CreateObject<Adnode> ());
+
   }
+
+  NS_LOG_DEBUG("protocol set");
+
 
   internet.Install (adversaryNodes);
 
   NS_LOG_INFO ("Assigning IP address");
 
   Ipv4AddressHelper addressAdhoc;
-  addressAdhoc.SetBase ("10.0.0.0", "255.255.255.0");
+  addressAdhoc.SetBase ("10.0.0.0", "255.255.255.0"/*, "10.0.0.0"*/);
   Ipv4InterfaceContainer adhocInterfaces = addressAdhoc.Assign (adhocDevices);
 
   NS_LOG_DEBUG("setbase for adhoc");
 
+  //potential fix for segfault
   /*Ipv4AddressHelper addressAdversary;
-  addressAdversary.SetBase ("10.0.0.0", "255.255.255.0");
+  addressAdversary.SetBase ("10.0.0.0", "255.255.255.0", "10.0.0.100");
   Ipv4InterfaceContainer adversaryInterfaces = addressAdversary.Assign(adversaryDevices);*/
 
   //NS_LOG_DEBUG("set base for adversary");
@@ -450,11 +465,17 @@ RoutingExperiment::Run ()
   AsciiTraceHelper ascii;
   MobilityHelper::EnableAsciiAll (ascii.CreateFileStream (tr_name + ".mob"));
 
+  NS_LOG_DEBUG("finish config");
+
+
   NS_LOG_INFO ("Run Simulation.");
 
   CheckThroughput ();
 
   Simulator::Stop (m_total_time);
+
+  AnimationInterface anim("anim.xml");
+
   Simulator::Run ();
 
   Simulator::Destroy ();
