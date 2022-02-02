@@ -18,7 +18,7 @@ namespace ns3
             .SetParent<Application>()
             .AddConstructor<Adnode>()
             .AddAttribute ("Velocity", "The velocity of the adversary",
-                   UintegerValue (0),
+                   UintegerValue (1),
                    MakeUintegerAccessor (&Adnode::m_velocity),
                    MakeUintegerChecker<uint32_t> ())
             ;
@@ -48,20 +48,28 @@ namespace ns3
 
         //TODO: consider packet filtering
 
-        Ptr<AdversaryMobilityModel> mob = GetObject<AdversaryMobilityModel>();
+        Ptr<MobilityModel> mob = GetNode()->GetObject<MobilityModel>();
+        NS_ASSERT(mob);
 
+        Ptr<AdversaryMobilityModel> admob = DynamicCast<AdversaryMobilityModel>(mob);
+        NS_ASSERT(admob);
         //error logging for null node from address
         Ptr<Node> n = Adnode::GetNodeFromAddress(from);
+        NS_ASSERT(n);
         Ptr<MobilityModel> mobAdhoc = n->GetObject<MobilityModel>();
+        
+        NS_ASSERT(mobAdhoc);
+        NS_LOG_DEBUG("adhoc: " << mobAdhoc->GetPosition());
+        NS_LOG_DEBUG("mob: " << &admob << admob->GetPosition());
 
-        const Vector my_position = mob->GetPosition();
+        const Vector my_position = admob->GetPosition();
         Vector target_position = mobAdhoc->GetPosition();
 
         double distance = CalculateDistance(target_position, my_position);
 
         Time time_to_reach = Seconds (distance / m_velocity);
 
-        mob->SetTarget(Simulator::Now() + time_to_reach, target_position);
+        admob->SetTarget(Simulator::Now() + time_to_reach, target_position);
 
         return true;
     }

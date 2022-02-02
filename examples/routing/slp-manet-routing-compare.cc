@@ -312,28 +312,27 @@ RoutingExperiment::Run ()
   ssSpeed << "ns3::UniformRandomVariable[Min=0.0|Max=" << nodeSpeed << "]";
   std::stringstream ssPause;
   ssPause << "ns3::ConstantRandomVariable[Constant=" << nodePause << "]";
-  mobilityAdhoc.SetMobilityModel ("ns3::RandomWaypointMobilityModel",
+  /*mobilityAdhoc.SetMobilityModel ("ns3::RandomWaypointMobilityModel",
                                   "Speed", StringValue (ssSpeed.str ()),
                                   "Pause", StringValue (ssPause.str ()),
-                                  "PositionAllocator", PointerValue (taPositionAlloc));
+                                  "PositionAllocator", PointerValue (taPositionAlloc));*/
+  mobilityAdhoc.SetMobilityModel("ns3::ConstantPositionMobilityModel");
   mobilityAdhoc.SetPositionAllocator (taPositionAlloc);
   mobilityAdhoc.Install (adhocNodes);
   streamIndex += mobilityAdhoc.AssignStreams (adhocNodes, streamIndex);
   NS_UNUSED (streamIndex); // From this point, streamIndex is unused
 
-  //change this too
+  int64_t adStreamIndex = 0;
+
+  Ptr<PositionAllocator> adTaPositionAlloc = pos.Create ()->GetObject<PositionAllocator> ();
+  adStreamIndex += adTaPositionAlloc->AssignStreams (adStreamIndex);
+
   mobilityAdversary.SetMobilityModel ("ns3::AdversaryMobilityModel");
-  //mobilityAdversary.SetMobilityModel ("ns3::RandomWaypointMobilityModel",
-  //                                "Speed", StringValue (ssSpeed.str ()),
-  //                                "Pause", StringValue (ssPause.str ()),
-  //                                "PositionAllocator", PointerValue (taPositionAlloc));
-  mobilityAdversary.SetPositionAllocator (taPositionAlloc);
+  mobilityAdversary.SetPositionAllocator (adTaPositionAlloc);
   mobilityAdversary.Install (adversaryNodes);
 
-  Ptr<AdversaryMobilityModel> adversaryMob;
-  NS_LOG_DEBUG("admob: " << adversaryNodes.Get(m_aNodes-1));
-  //adversaryMob = adversaryNodes.Get(m_aNodes)->GetObject<AdversaryMobilityModel>();
-
+  adStreamIndex += mobilityAdversary.AssignStreams (adversaryNodes, adStreamIndex);
+  NS_UNUSED (adStreamIndex); // From this point, streamIndex is unused
 
   AodvHelper aodv;
   OlsrHelper olsr;
@@ -393,7 +392,6 @@ RoutingExperiment::Run ()
   {
     Ptr<Node> object = *n;
     object->AddApplication(CreateObject<Adnode> ());
-
   }
 
   NS_LOG_DEBUG("protocol set");
