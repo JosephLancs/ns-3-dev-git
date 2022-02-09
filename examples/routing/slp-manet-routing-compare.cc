@@ -463,6 +463,12 @@ RoutingExperiment::Run ()
   AsciiTraceHelper ascii;
   MobilityHelper::EnableAsciiAll (ascii.CreateFileStream (tr_name + ".mob"));
 
+
+  wifiPhy.SetPcapDataLinkType (WifiPhyHelper::DLT_IEEE802_11);
+  wifiPhy.EnablePcap ("adhocNode", adhocNodes);
+  wifiPhy.EnablePcap ("advNode", adversaryNodes);
+
+
   NS_LOG_DEBUG("finish config");
 
 
