@@ -6,6 +6,7 @@
 #include "ns3/node.h"
 #include "adnode.h"
 #include "ns3/uinteger.h"
+#include "ns3/udp-header.h"
 
 namespace ns3
 {
@@ -36,6 +37,28 @@ namespace ns3
         NS_LOG_FUNCTION (this);
     }
 
+    void Adnode::Add_Sim_Source(Ptr<Node> src)
+    {
+        m_source_nodes.Add(src);
+    }
+
+    bool Adnode::HasReachedSource(Ptr<MobilityModel> me)
+    {
+        for(NodeContainer::Iterator n = m_source_nodes.Begin (); n != m_source_nodes.End (); n++)
+        {
+            Ptr<Node> object = *n;
+            //if(object->GetObject<MobilityModel>()->GetPosition() == me->GetPosition())
+            //{
+            //    return true;
+            //}
+            if (CalculateDistance(object->GetObject<MobilityModel>()->GetPosition(), me->GetPosition()) == 0)
+            {
+                return true;
+            }
+        }
+        return false;
+    }
+    
     bool Adnode::ReceivePacket(Ptr<NetDevice> device,
                                Ptr<const Packet> packet,
                                uint16_t protocol,
@@ -47,6 +70,14 @@ namespace ns3
         NS_LOG_FUNCTION(this << "Receive adnode: " << packet);
 
         //TODO: consider packet filtering
+        UdpHeader udpHeader;
+        packet->PeekHeader (udpHeader);
+        if (udpHeader.GetDestinationPort () != 9)
+        {
+            // AODV packets sent in broadcast are already managed - adversary discard
+            return true;
+        }
+        
 
         Ptr<MobilityModel> mob = GetNode()->GetObject<MobilityModel>();
         NS_ASSERT(mob);
@@ -70,6 +101,14 @@ namespace ns3
         Time time_to_reach = Seconds (distance / m_velocity);
 
         admob->SetTarget(Simulator::Now() + time_to_reach, target_position);
+
+
+
+        if(HasReachedSource(admob))
+        {
+            NS_LOG_INFO("Adversary has captured source node.");
+            Simulator::Stop();
+        }
 
         return true;
     }

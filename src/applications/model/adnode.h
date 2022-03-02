@@ -22,6 +22,10 @@ namespace ns3
             Adnode();
             virtual ~Adnode() = default;
 
+            bool HasReachedSource(Ptr<MobilityModel> me);
+
+            void Add_Sim_Source(Ptr<Node> src);
+
 
         private:
             virtual void StartApplication(void);
@@ -37,6 +41,8 @@ namespace ns3
 
         private:
             uint32_t m_velocity;
+            NodeContainer m_source_nodes;
+            //list(Ptr<Node>) m_source_nodes;
     };
 }
 
