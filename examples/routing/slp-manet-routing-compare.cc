@@ -114,6 +114,7 @@ private:
   double m_txp;
   bool m_traceMobility;
   uint32_t m_protocol;
+  uint32_t m_mobmod;
   Time m_total_time;
   Time m_send_start;
 
@@ -133,8 +134,9 @@ RoutingExperiment::RoutingExperiment ()
     m_txp (7.5),
     m_traceMobility (false),
     m_protocol (2), // AODV
+    m_mobmod (1), // 1 - RandomWaypoint; 2 - Constant Position; 3 - ?
     m_total_time (Seconds (200.0)),
-    m_send_start (Seconds (100.0))
+    m_send_start (Seconds (10.0))
 {
 }
 
@@ -166,7 +168,7 @@ RoutingExperiment::ReceivePacket (Ptr<Socket> socket)
     {
       bytesTotal += packet->GetSize ();
       packetsReceived += 1;
-      NS_LOG_UNCOND (PrintReceivedPacket (socket, packet, senderAddress));
+      NS_LOG_UNCOND (packetsReceived << ": " << PrintReceivedPacket (socket, packet, senderAddress));
     }
 }
 
@@ -217,6 +219,9 @@ RoutingExperiment::CommandSetup (int argc, char **argv)
   cmd.AddValue ("transmit-power", "The transmit power (default: 7.5)", m_txp);
   cmd.AddValue ("total-time", "The total simulation time (default: 200)", m_total_time);
   cmd.AddValue ("send-start", "The time at which packets will start sending (default: 100)", m_send_start);
+  cmd.AddValue ("Transmission-Power", "Transmission power level (dbm)", m_txp);
+  cmd.AddValue ("Mobility-Model", "Choose mobility model for adhoc nodes", m_mobmod);
+  cmd.AddValue ("adversary-nodes", "Number of adversary nodes", m_aNodes);
   cmd.Parse (argc, argv);
 }
 
@@ -247,11 +252,11 @@ RoutingExperiment::Run ()
   NS_LOG_DEBUG("begin running");
   Packet::EnablePrinting ();
 
-  std::string rate ("2048bps");
+  std::string rate ("64bps");
   uint32_t packet_size (64);
   std::string phyMode ("DsssRate11Mbps");
   std::string tr_name ("slp-manet-routing-compare");
-  int nodeSpeed = 20; //in m/s
+  double nodeSpeed = 0.5; //in m/s
   int nodePause = 0; //in s
 
   Config::SetDefault ("ns3::OnOffApplication::PacketSize", UintegerValue (packet_size));
@@ -301,9 +306,16 @@ RoutingExperiment::Run ()
   int64_t streamIndex = 0; // used to get consistent mobility across scenarios
 
   ObjectFactory pos;
-  pos.SetTypeId ("ns3::RandomRectanglePositionAllocator");
-  pos.Set ("X", StringValue ("ns3::UniformRandomVariable[Min=0.0|Max=300.0]"));
-  pos.Set ("Y", StringValue ("ns3::UniformRandomVariable[Min=0.0|Max=300.0]"));
+  //pos.SetTypeId ("ns3::RandomRectanglePositionAllocator");
+  ///pos.Set ("X", StringValue ("ns3::UniformRandomVariable[Min=0.0|Max=300.0]"));
+  //pos.Set ("Y", StringValue ("ns3::UniformRandomVariable[Min=0.0|Max=300.0]"));
+  pos.SetTypeId ("ns3::GridPositionAllocator");
+  pos.Set("MinX", DoubleValue (0.0));
+  pos.Set("MinY", DoubleValue (0.0));
+  pos.Set("DeltaX", DoubleValue (40));
+  pos.Set("DeltaY", DoubleValue (40));
+  pos.Set("GridWidth", UintegerValue (sqrt(m_nNodes)));
+  pos.Set("LayoutType", StringValue ("RowFirst"));
 
   Ptr<PositionAllocator> taPositionAlloc = pos.Create ()->GetObject<PositionAllocator> ();
   streamIndex += taPositionAlloc->AssignStreams (streamIndex);
@@ -312,11 +324,20 @@ RoutingExperiment::Run ()
   ssSpeed << "ns3::UniformRandomVariable[Min=0.0|Max=" << nodeSpeed << "]";
   std::stringstream ssPause;
   ssPause << "ns3::ConstantRandomVariable[Constant=" << nodePause << "]";
-  /*mobilityAdhoc.SetMobilityModel ("ns3::RandomWaypointMobilityModel",
-                                  "Speed", StringValue (ssSpeed.str ()),
-                                  "Pause", StringValue (ssPause.str ()),
-                                  "PositionAllocator", PointerValue (taPositionAlloc));*/
-  mobilityAdhoc.SetMobilityModel("ns3::ConstantPositionMobilityModel");
+  switch(m_mobmod)
+  {
+    case 1:
+      mobilityAdhoc.SetMobilityModel("ns3::ConstantPositionMobilityModel");
+      break;
+    case 2:
+      mobilityAdhoc.SetMobilityModel ("ns3::RandomWaypointMobilityModel",
+                                      "Speed", StringValue (ssSpeed.str ()),
+                                      "Pause", StringValue (ssPause.str ()),
+                                      "PositionAllocator", PointerValue (taPositionAlloc));
+      break;
+      default:
+        NS_FATAL_ERROR("Error in Mobility Model parameter.");
+  }
   mobilityAdhoc.SetPositionAllocator (taPositionAlloc);
   mobilityAdhoc.Install (adhocNodes);
   streamIndex += mobilityAdhoc.AssignStreams (adhocNodes, streamIndex);
@@ -424,6 +445,28 @@ RoutingExperiment::Run ()
       Ptr<Node> target_node = adhocNodes.Get (target_id);
       Ptr<Node> source_node = adhocNodes.Get (source_id);
 
+      NS_LOG_DEBUG("begin source nodes add to adnodes");
+
+      for(NodeContainer::Iterator n = adversaryNodes.Begin (); n != adversaryNodes.End (); n++)
+      {
+        //NS_ASSERT(n);
+        NS_LOG_DEBUG("1");
+        Ptr<Node> object = *n;
+        NS_LOG_DEBUG("2");
+        Ptr<Adnode> ad = DynamicCast<Adnode>(object);
+        NS_LOG_DEBUG("3");
+        //ad->Add_Sim_Source(source_node);
+        //Ptr<Application> app = object->GetApplication(0);
+        NS_LOG_DEBUG(object->GetApplication(0));
+        //object->Add_Sim_Source(source_node);
+        //object->GetApplication(0)->Add_Sim_Source(source_node)
+        NS_LOG_DEBUG(ad);
+        NS_LOG_DEBUG(source_node);
+        //ad->Add_Sim_Source(source_node);
+        NS_LOG_DEBUG("4");
+      }
+
+      NS_LOG_DEBUG("source nodes added to adnodes");
       auto target = InetSocketAddress (adhocInterfaces.GetAddress (target_id), port);
 
       OnOffHelper onoff ("ns3::UdpSocketFactory", target);
@@ -474,7 +517,7 @@ RoutingExperiment::Run ()
 
   NS_LOG_INFO ("Run Simulation.");
 
-  CheckThroughput ();
+  //CheckThroughput ();
 
   Simulator::Stop (m_total_time);
 
