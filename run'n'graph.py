@@ -12,7 +12,7 @@ advNodes = 3
 simTime = 200
 sendTime = 10
 transmissionPower = 7.5
-mobilityMod = 1
+mobilityMod = 1 # 1. stationary; 2. mobile
 
 resultsToPlot = {}
 secondaryRTP = {}
@@ -52,7 +52,7 @@ def main():
                                                     " --adversary-nodes=" + str(advNodes) + \
                                                     " --total-time=" + str(simTime) + \
                                                     " --send-start=" + str(sendTime) + \
-                                                    " --Transmission-Power=" + str(transmissionPower) + \
+                                                    " --transmit-power=" + str(transmissionPower) + \
                                                     " --Mobility-Model=" + str(mobilityMod) + "\""
 
         print(cmd)

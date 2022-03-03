@@ -131,7 +131,7 @@ RoutingExperiment::RoutingExperiment ()
     m_nNodes (100),
     m_aNodes(3),
     m_protocolName(""),
-    m_txp (7.5),
+    m_txp (4),
     m_traceMobility (false),
     m_protocol (2), // AODV
     m_mobmod (1), // 1 - RandomWaypoint; 2 - Constant Position; 3 - ?
@@ -219,7 +219,6 @@ RoutingExperiment::CommandSetup (int argc, char **argv)
   cmd.AddValue ("transmit-power", "The transmit power (default: 7.5)", m_txp);
   cmd.AddValue ("total-time", "The total simulation time (default: 200)", m_total_time);
   cmd.AddValue ("send-start", "The time at which packets will start sending (default: 100)", m_send_start);
-  cmd.AddValue ("Transmission-Power", "Transmission power level (dbm)", m_txp);
   cmd.AddValue ("Mobility-Model", "Choose mobility model for adhoc nodes", m_mobmod);
   cmd.AddValue ("adversary-nodes", "Number of adversary nodes", m_aNodes);
   cmd.Parse (argc, argv);
@@ -249,6 +248,7 @@ main (int argc, char *argv[])
 void
 RoutingExperiment::Run ()
 {
+  RngSeedManager::SetSeed(10);
   NS_LOG_DEBUG("begin running");
   Packet::EnablePrinting ();
 
@@ -277,7 +277,7 @@ RoutingExperiment::Run ()
 
   // setting up wifi phy and channel using helpers
   WifiHelper wifi;
-  wifi.SetStandard (WIFI_PHY_STANDARD_80211b);
+  wifi.SetStandard (WIFI_PHY_STANDARD_80211n_2_4GHZ);
   wifi.SetRemoteStationManager ("ns3::ConstantRateWifiManager",
                                 "DataMode", StringValue (phyMode),
                                 "ControlMode", StringValue (phyMode));
@@ -296,7 +296,7 @@ RoutingExperiment::Run ()
 
   NetDeviceContainer adhocDevices = wifi.Install (wifiPhy, wifiMac, adhocNodes);
   NetDeviceContainer adversaryDevices = wifi.Install (wifiPhy, wifiMac, adversaryNodes);
-
+//parameterise distance
 
 
   MobilityHelper mobilityAdhoc;
@@ -312,8 +312,8 @@ RoutingExperiment::Run ()
   pos.SetTypeId ("ns3::GridPositionAllocator");
   pos.Set("MinX", DoubleValue (0.0));
   pos.Set("MinY", DoubleValue (0.0));
-  pos.Set("DeltaX", DoubleValue (40));
-  pos.Set("DeltaY", DoubleValue (40));
+  pos.Set("DeltaX", DoubleValue (8));
+  pos.Set("DeltaY", DoubleValue (8));
   pos.Set("GridWidth", UintegerValue (sqrt(m_nNodes)));
   pos.Set("LayoutType", StringValue ("RowFirst"));
 
@@ -465,6 +465,8 @@ RoutingExperiment::Run ()
         //ad->Add_Sim_Source(source_node);
         NS_LOG_DEBUG("4");
       }
+
+      //RngSeedManager::SetSeed(14);
 
       NS_LOG_DEBUG("source nodes added to adnodes");
       auto target = InetSocketAddress (adhocInterfaces.GetAddress (target_id), port);
