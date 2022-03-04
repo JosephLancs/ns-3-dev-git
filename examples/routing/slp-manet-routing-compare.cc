@@ -249,6 +249,7 @@ void
 RoutingExperiment::Run ()
 {
   RngSeedManager::SetSeed(10);
+
   NS_LOG_DEBUG("begin running");
   Packet::EnablePrinting ();
 
@@ -449,21 +450,18 @@ RoutingExperiment::Run ()
 
       for(NodeContainer::Iterator n = adversaryNodes.Begin (); n != adversaryNodes.End (); n++)
       {
-        //NS_ASSERT(n);
-        NS_LOG_DEBUG("1");
         Ptr<Node> object = *n;
-        NS_LOG_DEBUG("2");
-        Ptr<Adnode> ad = DynamicCast<Adnode>(object);
-        NS_LOG_DEBUG("3");
-        //ad->Add_Sim_Source(source_node);
-        //Ptr<Application> app = object->GetApplication(0);
-        NS_LOG_DEBUG(object->GetApplication(0));
-        //object->Add_Sim_Source(source_node);
-        //object->GetApplication(0)->Add_Sim_Source(source_node)
-        NS_LOG_DEBUG(ad);
-        NS_LOG_DEBUG(source_node);
-        //ad->Add_Sim_Source(source_node);
-        NS_LOG_DEBUG("4");
+        Ptr<Adnode> ad;
+        for(uint32_t i = 0; i < object->GetNApplications(); ++i)
+        {
+          NS_LOG_DEBUG("app found");
+          ad = object->GetApplication(i)->GetObject<Adnode>();
+          if(ad != NULL)
+          {
+            ad->Add_Sim_Source(source_node);
+            NS_LOG_DEBUG("adnode found");
+          }
+        }
       }
 
       //RngSeedManager::SetSeed(14);

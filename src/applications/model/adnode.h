@@ -7,6 +7,7 @@
 #include "ns3/ipv4-address.h"
 #include "ns3/simulator.h"
 #include "ns3/node-container.h"
+//#include "ns3/aodv-dpd.h"
 #include <vector>
 
 
@@ -42,6 +43,7 @@ namespace ns3
         private:
             uint32_t m_velocity;
             NodeContainer m_source_nodes;
+            //DuplicatePacketDetection m_dpd;
             //list(Ptr<Node>) m_source_nodes;
     };
 }

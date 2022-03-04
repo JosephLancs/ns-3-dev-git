@@ -44,17 +44,25 @@ namespace ns3
 
     bool Adnode::HasReachedSource(Ptr<MobilityModel> me)
     {
+        Ptr<MobilityModel> mob = GetNode()->GetObject<MobilityModel>();
+        Vector adpos = mob->GetPosition();
+        Vector srcpos;
         for(NodeContainer::Iterator n = m_source_nodes.Begin (); n != m_source_nodes.End (); n++)
         {
             Ptr<Node> object = *n;
-            //if(object->GetObject<MobilityModel>()->GetPosition() == me->GetPosition())
-            //{
-            //    return true;
-            //}
-            if (CalculateDistance(object->GetObject<MobilityModel>()->GetPosition(), me->GetPosition()) == 0)
+            srcpos = object->GetObject<MobilityModel>()->GetPosition();
+            if (CalculateDistance(adpos, srcpos) == 0)
             {
+                fprintf(stdout, "Distance between stc%f", CalculateDistance(adpos, srcpos));
                 return true;
+            }             
+            else
+            {
+                NS_LOG_DEBUG("test");
+                fprintf(stdout, "Distance between stc%f", CalculateDistance(adpos, srcpos));
             }
+
+            
         }
         return false;
     }
