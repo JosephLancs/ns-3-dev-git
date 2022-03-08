@@ -7,6 +7,8 @@
 #include "adnode.h"
 #include "ns3/uinteger.h"
 #include "ns3/udp-header.h"
+#include "ns3/packet.h"
+#include "ns3/ipv4-header.h"
 
 namespace ns3
 {
@@ -51,7 +53,7 @@ namespace ns3
         {
             Ptr<Node> object = *n;
             srcpos = object->GetObject<MobilityModel>()->GetPosition();
-            if (CalculateDistance(adpos, srcpos) == 0)
+            if (CalculateDistance(adpos, srcpos) <= 5)
             {
                 fprintf(stdout, "Distance between stc%f", CalculateDistance(adpos, srcpos));
                 return true;
@@ -77,15 +79,42 @@ namespace ns3
 
         NS_LOG_FUNCTION(this << "Receive adnode: " << packet);
 
-        //TODO: consider packet filtering
+        Ptr<Packet> m_packet;
+        Ipv4Header ipHeader;
         UdpHeader udpHeader;
-        packet->PeekHeader (udpHeader);
+
+        m_packet = packet -> Copy();
+        m_packet->RemoveHeader (ipHeader);
+        m_packet->PeekHeader(udpHeader);
+        //TODO: consider packet filtering
+
+        uint16_t port = udpHeader.GetDestinationPort();
+        NS_LOG_FUNCTION("header" << port << ".");
+        uint16_t portMatch = 9;
+        if(udpHeader.GetDestinationPort() == portMatch)
+        {
+            NS_LOG_FUNCTION("success");
+        }
+        /*if(udpHeader.GetDestinationPort() == NULL)
+        {
+            NS_LOG_FUNCTION("success");
+        }*/
+        if(udpHeader.GetDestinationPort() == 0)
+        {
+            NS_LOG_FUNCTION("success");
+        }
+        if(udpHeader.GetDestinationPort() == 49153)
+        {
+            NS_LOG_FUNCTION("success");
+        }
+
         if (udpHeader.GetDestinationPort () != 9)
         {
+            NS_LOG_FUNCTION("adversary disgarding packet - not on port 9");
             // AODV packets sent in broadcast are already managed - adversary discard
             return true;
         }
-        
+        NS_LOG_FUNCTION("adversary processing packet");
 
         Ptr<MobilityModel> mob = GetNode()->GetObject<MobilityModel>();
         NS_ASSERT(mob);
@@ -98,8 +127,8 @@ namespace ns3
         Ptr<MobilityModel> mobAdhoc = n->GetObject<MobilityModel>();
         
         NS_ASSERT(mobAdhoc);
-        NS_LOG_DEBUG("adhoc: " << mobAdhoc->GetPosition());
-        NS_LOG_DEBUG("mob: " << &admob << admob->GetPosition());
+        NS_LOG_FUNCTION("adhoc: " << mobAdhoc->GetPosition());
+        NS_LOG_FUNCTION("mob: " << &admob << admob->GetPosition());
 
         const Vector my_position = admob->GetPosition();
         Vector target_position = mobAdhoc->GetPosition();

@@ -134,6 +134,7 @@ AdversaryMobilityModel::WaypointsLeft (void) const
   Update ();
   return m_waypoints.size ();
 }
+
 void
 AdversaryMobilityModel::Update (void) const
 {

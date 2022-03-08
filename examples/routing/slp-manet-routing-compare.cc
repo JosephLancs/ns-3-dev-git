@@ -105,6 +105,7 @@ private:
   uint32_t port;
   uint32_t bytesTotal;
   uint32_t packetsReceived;
+  uint32_t m_seed;
 
   std::string m_CSVfileName;
   int m_nSinks;
@@ -117,6 +118,7 @@ private:
   uint32_t m_mobmod;
   Time m_total_time;
   Time m_send_start;
+  
 
 private:
   std::vector<Ptr<Socket>> m_sinks;
@@ -126,6 +128,7 @@ RoutingExperiment::RoutingExperiment ()
   : port (9), // Discard port (RFC 863)
     bytesTotal (0),
     packetsReceived (0),
+    m_seed(10),
     m_CSVfileName ("slp-manet-routing.output.csv"),
     m_nSinks (1),
     m_nNodes (100),
@@ -221,6 +224,7 @@ RoutingExperiment::CommandSetup (int argc, char **argv)
   cmd.AddValue ("send-start", "The time at which packets will start sending (default: 100)", m_send_start);
   cmd.AddValue ("Mobility-Model", "Choose mobility model for adhoc nodes", m_mobmod);
   cmd.AddValue ("adversary-nodes", "Number of adversary nodes", m_aNodes);
+  cmd.AddValue ("seed", "Value of seed (uint32)", m_seed);
   cmd.Parse (argc, argv);
 }
 
@@ -248,6 +252,7 @@ main (int argc, char *argv[])
 void
 RoutingExperiment::Run ()
 {
+  //RngSeedManager::SetSeed(m_seed);
   RngSeedManager::SetSeed(10);
 
   NS_LOG_DEBUG("begin running");
