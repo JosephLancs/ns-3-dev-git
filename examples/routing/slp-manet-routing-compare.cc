@@ -134,10 +134,10 @@ RoutingExperiment::RoutingExperiment ()
     m_nNodes (100),
     m_aNodes(3),
     m_protocolName(""),
-    m_txp (4),
+    m_txp (1),
     m_traceMobility (false),
     m_protocol (2), // AODV
-    m_mobmod (1), // 1 - RandomWaypoint; 2 - Constant Position; 3 - ?
+    m_mobmod (2), // 2 - RandomWaypoint; 1 - Constant Position; 3 - ?
     m_total_time (Seconds (200.0)),
     m_send_start (Seconds (10.0))
 {

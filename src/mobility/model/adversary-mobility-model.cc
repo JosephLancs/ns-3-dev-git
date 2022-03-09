@@ -86,7 +86,7 @@ AdversaryMobilityModel::DoDispose (void)
 void
 AdversaryMobilityModel::AddWaypoint (const Waypoint &waypoint)
 {
-  if ( m_first )
+  /*if ( m_first )
     {
       m_first = false;
       m_current = m_next = waypoint;
@@ -101,15 +101,25 @@ AdversaryMobilityModel::AddWaypoint (const Waypoint &waypoint)
   if ( !m_lazyNotify )
     {
       Simulator::Schedule (waypoint.time - Simulator::Now (), &AdversaryMobilityModel::Update, this);
-    }
+    }*/
+    RemoveAllWaypoints();
+    m_current = m_next = waypoint;
+    Simulator::Schedule (waypoint.time, &AdversaryMobilityModel::Update, this);
 }
 
 void
 AdversaryMobilityModel::RemoveAllWaypoints (void)
 {
   // TODO: implement this which removes all waypoints
-  m_waypoints.clear ();
-  m_first = true;
+  try
+  {
+    m_waypoints.clear ();
+    m_first = true;
+  }
+  catch(const std::exception& e)
+  {
+    std::cerr << e.what() << '\n';
+  }
 }
 
 Waypoint
@@ -122,9 +132,15 @@ AdversaryMobilityModel::GetNextWaypoint (void) const
 void
 AdversaryMobilityModel::SetTarget (const Time& t, const Vector& v)
 {
+  NS_LOG_FUNCTION("4");
   RemoveAllWaypoints ();
+  NS_LOG_FUNCTION("5");
   AddWaypoint (Waypoint(t, v));
+  NS_LOG_FUNCTION("6");
   Update ();
+  NS_LOG_FUNCTION("7");
+  m_notified = false;
+
 }
 
 
@@ -139,9 +155,31 @@ void
 AdversaryMobilityModel::Update (void) const
 {
   const Time now = Simulator::Now ();
-  bool newWaypoint = false;
+  //bool newWaypoint = false;
+  Time curtime = m_current.time;
 
-  if ( now < m_current.time )
+  //Vector curpos = this->GetPosition();
+
+  NS_LOG_FUNCTION("Now: " << now << " move time: " << curtime);
+
+  if(now < m_current.time && m_notified == false)
+  {
+    m_velocity = Vector (0,0,0);
+    m_notified=true;
+    NotifyCourseChange();
+    NS_LOG_FUNCTION("course change complete");
+  }
+
+
+  if(now < m_current.time)
+  {
+    const double t_diff = (now - m_current.time).GetSeconds ();
+    m_current.position.x += m_velocity.x * t_diff;
+    m_current.position.y += m_velocity.y * t_diff;
+    m_current.position.z += m_velocity.z * t_diff;
+    //m_current.time = now;
+  }
+  /*if ( now < m_current.time )
     {
       return;
     }
@@ -152,10 +190,10 @@ AdversaryMobilityModel::Update (void) const
         {
           if ( m_current.time <= m_next.time )
             {
-              /*
+              *
                 Set m_next.time = -1 to make sure this doesn't happen more than once.
                 The comparison here still needs to be '<=' in the case of mobility with one waypoint.
-              */
+              /
               m_next.time = Seconds (-1.0);
               m_current.position = m_next.position;
               m_current.time = now;
@@ -189,12 +227,12 @@ AdversaryMobilityModel::Update (void) const
       m_current.position.y += m_velocity.y * t_diff;
       m_current.position.z += m_velocity.z * t_diff;
       m_current.time = now;
-    }
+    }*/
 
-  if ( newWaypoint )
-    {
-      NotifyCourseChange ();
-    }
+  //if ( newWaypoint )
+    //{
+     // NotifyCourseChange ();
+    //}
 }
 Vector
 AdversaryMobilityModel::DoGetPosition (void) const

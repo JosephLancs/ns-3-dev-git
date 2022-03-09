@@ -145,6 +145,8 @@ protected:
    * is calculated.
    */
   bool m_lazyNotify;
+
+  mutable bool m_notified;
   /**
    * \brief If true, calling SetPosition with no waypoints creates a waypoint
    */
@@ -165,6 +167,7 @@ protected:
    * \brief The current velocity vector
    */
   mutable Vector m_velocity;
+
 };
 
 } // namespace ns3
