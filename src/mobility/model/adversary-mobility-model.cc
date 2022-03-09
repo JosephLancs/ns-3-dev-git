@@ -17,7 +17,6 @@
  *
  * Author: Mathieu Lacage <mathieu.lacage@sophia.inria.fr>
  */
-#include <limits>
 #include "ns3/abort.h"
 #include "ns3/simulator.h"
 #include "ns3/uinteger.h"
@@ -72,6 +71,8 @@ AdversaryMobilityModel::SetTarget (const Time& t, const Vector& v)
 {
   const Time now = Simulator::Now ();
 
+  const bool had_waypoint = m_has_waypoint;
+
   m_has_waypoint = true;
   m_current = Waypoint(t, v);
 
@@ -83,6 +84,11 @@ AdversaryMobilityModel::SetTarget (const Time& t, const Vector& v)
   m_last_update = now;
 
   Update ();
+
+  if (had_waypoint)
+  {
+    NotifyCourseChange ();
+  }
 }
 
 void
@@ -101,12 +107,20 @@ AdversaryMobilityModel::Update (void) const
   const Time now = Simulator::Now ();
   const Time time_since_last_update = now - m_last_update;
 
-  Vector distance_to_travel = m_velocity;
-  distance_to_travel.x *= time_since_last_update.GetSeconds();
-  distance_to_travel.y *= time_since_last_update.GetSeconds();
-  distance_to_travel.z *= time_since_last_update.GetSeconds();
+  if (now >= m_current.time)
+  {
+    // If we should have reached the target by now, just set us there
+    m_position = m_current.position;
+  }
+  else
+  {
+    Vector distance_to_travel = m_velocity;
+    distance_to_travel.x *= time_since_last_update.GetSeconds();
+    distance_to_travel.y *= time_since_last_update.GetSeconds();
+    distance_to_travel.z *= time_since_last_update.GetSeconds();
 
-  m_position = m_position + distance_to_travel;
+    m_position = m_position + distance_to_travel;
+  }
 
   m_last_update = now;
 
@@ -147,7 +161,6 @@ void
 AdversaryMobilityModel::EndMobility (void)
 {
   m_has_waypoint = false;
-  m_current.time = Time(std::numeric_limits<uint64_t>::infinity());
   m_velocity = Vector();
 }
 
