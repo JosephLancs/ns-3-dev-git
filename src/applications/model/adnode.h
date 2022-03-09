@@ -43,6 +43,7 @@ namespace ns3
         private:
             uint32_t m_velocity;
             NodeContainer m_source_nodes;
+            uint32_t m_dist_to_calc;
             //DuplicatePacketDetection m_dpd;
             //list(Ptr<Node>) m_source_nodes;
     };

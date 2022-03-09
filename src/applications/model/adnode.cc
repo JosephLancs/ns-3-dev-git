@@ -24,6 +24,10 @@ namespace ns3
                    UintegerValue (1),
                    MakeUintegerAccessor (&Adnode::m_velocity),
                    MakeUintegerChecker<uint32_t> ())
+            .AddAttribute ("DistanceToCalculate", "Distance that if the adversary if from the node the simulation will stop",
+                    UintegerValue (5),
+                    MakeUintegerAccessor (&Adnode::m_dist_to_calc),
+                    MakeUintegerChecker<uint32_t> ())
             ;
 
         return tid;
@@ -53,8 +57,9 @@ namespace ns3
         {
             Ptr<Node> object = *n;
             srcpos = object->GetObject<MobilityModel>()->GetPosition();
-            if (CalculateDistance(adpos, srcpos) <= 5)
+            if (CalculateDistance(adpos, srcpos) <= m_dist_to_calc)
             {
+                NS_LOG_FUNCTION("Adpos: " << adpos << " srcpos: " << srcpos);
                 fprintf(stdout, "Distance between stc%f", CalculateDistance(adpos, srcpos));
                 return true;
             }             
@@ -90,23 +95,6 @@ namespace ns3
 
         uint16_t port = udpHeader.GetDestinationPort();
         NS_LOG_FUNCTION("header" << port << ".");
-        uint16_t portMatch = 9;
-        if(udpHeader.GetDestinationPort() == portMatch)
-        {
-            NS_LOG_FUNCTION("success");
-        }
-        /*if(udpHeader.GetDestinationPort() == NULL)
-        {
-            NS_LOG_FUNCTION("success");
-        }*/
-        if(udpHeader.GetDestinationPort() == 0)
-        {
-            NS_LOG_FUNCTION("success");
-        }
-        if(udpHeader.GetDestinationPort() == 49153)
-        {
-            NS_LOG_FUNCTION("success");
-        }
 
         if (udpHeader.GetDestinationPort () != 9)
         {
@@ -114,6 +102,7 @@ namespace ns3
             // AODV packets sent in broadcast are already managed - adversary discard
             return true;
         }
+
         NS_LOG_FUNCTION("adversary processing packet");
 
         Ptr<MobilityModel> mob = GetNode()->GetObject<MobilityModel>();
@@ -135,11 +124,11 @@ namespace ns3
 
         double distance = CalculateDistance(target_position, my_position);
 
-        Time time_to_reach = Seconds (distance / m_velocity);
+        Time time_to_reach = Simulator::Now() + Seconds (distance / m_velocity);
+  
+        admob->SetTarget(time_to_reach, target_position);
 
-        admob->SetTarget(Simulator::Now() + time_to_reach, target_position);
-
-
+        NS_LOG_FUNCTION("Timetoreach: " << time_to_reach << " target pos: " << target_position);
 
         if(HasReachedSource(admob))
         {
