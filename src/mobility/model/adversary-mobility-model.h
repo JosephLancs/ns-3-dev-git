@@ -65,19 +65,6 @@ public:
   AdversaryMobilityModel ();
   virtual ~AdversaryMobilityModel ();
 
-  void RemoveAllWaypoints (void);
-
-  /**
-   * \param waypoint waypoint to append to the object path.
-   *
-   * Add a waypoint to the path of the object. The time must
-   * be greater than the previous waypoint added, otherwise
-   * a fatal error occurs. The first waypoint is set as the
-   * current position with a velocity of zero.
-   *
-   */
-  void AddWaypoint (const Waypoint &waypoint);
-
   /**
    * @brief Set the Target object
    * 
@@ -89,22 +76,10 @@ public:
   SetTarget (const Time& t, const Vector& v);
 
   /**
-   * Get the waypoint that this object is traveling towards.
-   */
-  Waypoint GetNextWaypoint (void) const;
-
-  /**
-   * Get the number of waypoints left for this object, excluding
-   * the next one.
-   */
-  uint32_t WaypointsLeft (void) const;
-
-  /**
    * Clear any existing waypoints and set the current waypoint
    * time to infinity. Calling this is only an optimization and
    * not required. After calling this function, adding waypoints
-   * behaves as it woul
-d for a new object.
+   * behaves as it would for a new object.
    */
   void EndMobility (void);
 
@@ -136,33 +111,21 @@ private:
   virtual Vector DoGetVelocity (void) const;
 
 protected:
-  /**
-   * \brief This variable is set to true if there are no waypoints in the std::deque
-   */
-  bool m_first;
-  /**
-   * \brief If true, course change updates are only notified when position
-   * is calculated.
-   */
-  bool m_lazyNotify;
+  mutable bool m_has_waypoint;
+  mutable bool m_has_set_position;
 
-  mutable bool m_notified;
-  /**
-   * \brief If true, calling SetPosition with no waypoints creates a waypoint
-   */
-  bool m_initialPositionIsWaypoint;
-  /**
-   * \brief The double ended queue containing the ns3::Waypoint objects
-   */
-  mutable std::deque<Waypoint> m_waypoints;
+  mutable Time m_last_update;
+
   /**
    * \brief The ns3::Waypoint currently being used
    */
   mutable Waypoint m_current;
+
   /**
-   * \brief The next ns3::Waypoint in the deque
+   * \brief The current position
    */
-  mutable Waypoint m_next;
+  mutable Vector m_position;
+
   /**
    * \brief The current velocity vector
    */

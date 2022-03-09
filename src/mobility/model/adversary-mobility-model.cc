@@ -46,229 +46,109 @@ AdversaryMobilityModel::GetTypeId (void)
     .SetParent<MobilityModel> ()
     .SetGroupName ("Mobility")
     .AddConstructor<AdversaryMobilityModel> ()
-    .AddAttribute ("NextWaypoint", "The next waypoint used to determine position.",
-                   TypeId::ATTR_GET,
-                   WaypointValue (),
-                   MakeWaypointAccessor (&AdversaryMobilityModel::GetNextWaypoint),
-                   MakeWaypointChecker ())
-    .AddAttribute ("WaypointsLeft", "The number of waypoints remaining.",
-                   TypeId::ATTR_GET,
-                   UintegerValue (0),
-                   MakeUintegerAccessor (&AdversaryMobilityModel::WaypointsLeft),
-                   MakeUintegerChecker<uint32_t> ())
-    .AddAttribute ("LazyNotify", "Only call NotifyCourseChange when position is calculated.",
-                   BooleanValue (false),
-                   MakeBooleanAccessor (&AdversaryMobilityModel::m_lazyNotify),
-                   MakeBooleanChecker ())
-    .AddAttribute ("InitialPositionIsWaypoint", "Calling SetPosition with no waypoints creates a waypoint.",
-                   BooleanValue (false),
-                   MakeBooleanAccessor (&AdversaryMobilityModel::m_initialPositionIsWaypoint),
-                   MakeBooleanChecker ())
   ;
   return tid;
 }
 
 
 AdversaryMobilityModel::AdversaryMobilityModel ()
-  : m_first (true),
-    m_lazyNotify (false),
-    m_initialPositionIsWaypoint (false)
+  : m_has_waypoint (false)
+  , m_has_set_position (false)
 {
 }
+
 AdversaryMobilityModel::~AdversaryMobilityModel ()
 {
 }
+
 void
 AdversaryMobilityModel::DoDispose (void)
 {
   MobilityModel::DoDispose ();
 }
-void
-AdversaryMobilityModel::AddWaypoint (const Waypoint &waypoint)
-{
-  /*if ( m_first )
-    {
-      m_first = false;
-      m_current = m_next = waypoint;
-    }
-  else
-    {
-      NS_ABORT_MSG_IF ( !m_waypoints.empty () && (m_waypoints.back ().time >= waypoint.time),
-                        "Waypoints must be added in ascending time order");
-      m_waypoints.push_back (waypoint);
-    }
-
-  if ( !m_lazyNotify )
-    {
-      Simulator::Schedule (waypoint.time - Simulator::Now (), &AdversaryMobilityModel::Update, this);
-    }*/
-    RemoveAllWaypoints();
-    m_current = m_next = waypoint;
-    Simulator::Schedule (waypoint.time, &AdversaryMobilityModel::Update, this);
-}
-
-void
-AdversaryMobilityModel::RemoveAllWaypoints (void)
-{
-  // TODO: implement this which removes all waypoints
-  try
-  {
-    m_waypoints.clear ();
-    m_first = true;
-  }
-  catch(const std::exception& e)
-  {
-    std::cerr << e.what() << '\n';
-  }
-}
-
-Waypoint
-AdversaryMobilityModel::GetNextWaypoint (void) const
-{
-  Update ();
-  return m_next;
-}
 
 void
 AdversaryMobilityModel::SetTarget (const Time& t, const Vector& v)
 {
-  NS_LOG_FUNCTION("4");
-  RemoveAllWaypoints ();
-  NS_LOG_FUNCTION("5");
-  AddWaypoint (Waypoint(t, v));
-  NS_LOG_FUNCTION("6");
+  const Time now = Simulator::Now ();
+
+  m_has_waypoint = true;
+  m_current = Waypoint(t, v);
+
+  m_velocity = m_current.position - m_position;
+  m_velocity.x /= (m_current.time - now).GetSeconds();
+  m_velocity.y /= (m_current.time - now).GetSeconds();
+  m_velocity.z /= (m_current.time - now).GetSeconds();
+
+  m_last_update = now;
+
   Update ();
-  NS_LOG_FUNCTION("7");
-  m_notified = false;
-
-}
-
-
-uint32_t
-AdversaryMobilityModel::WaypointsLeft (void) const
-{
-  Update ();
-  return m_waypoints.size ();
 }
 
 void
 AdversaryMobilityModel::Update (void) const
 {
+  NS_LOG_FUNCTION(this);
+
+  NS_ASSERT(m_has_set_position);
+
+  // Only move if we have a target
+  if (!m_has_waypoint)
+  {
+    return;
+  }
+
   const Time now = Simulator::Now ();
-  //bool newWaypoint = false;
-  Time curtime = m_current.time;
+  const Time time_since_last_update = now - m_last_update;
 
-  //Vector curpos = this->GetPosition();
+  Vector distance_to_travel = m_velocity;
+  distance_to_travel.x *= time_since_last_update.GetSeconds();
+  distance_to_travel.y *= time_since_last_update.GetSeconds();
+  distance_to_travel.z *= time_since_last_update.GetSeconds();
 
-  NS_LOG_FUNCTION("Now: " << now << " move time: " << curtime);
+  m_position = m_position + distance_to_travel;
 
-  if(now < m_current.time && m_notified == false)
+  m_last_update = now;
+
+  // Reached target, stop moving
+  if (CalculateDistance(m_position, m_current.position) == 0)
   {
-    m_velocity = Vector (0,0,0);
-    m_notified=true;
-    NotifyCourseChange();
-    NS_LOG_FUNCTION("course change complete");
+    m_has_waypoint = false;
+    m_velocity = Vector();
   }
-
-
-  if(now < m_current.time)
-  {
-    const double t_diff = (now - m_current.time).GetSeconds ();
-    m_current.position.x += m_velocity.x * t_diff;
-    m_current.position.y += m_velocity.y * t_diff;
-    m_current.position.z += m_velocity.z * t_diff;
-    //m_current.time = now;
-  }
-  /*if ( now < m_current.time )
-    {
-      return;
-    }
-
-  while ( now >= m_next.time  )
-    {
-      if ( m_waypoints.empty () )
-        {
-          if ( m_current.time <= m_next.time )
-            {
-              *
-                Set m_next.time = -1 to make sure this doesn't happen more than once.
-                The comparison here still needs to be '<=' in the case of mobility with one waypoint.
-              /
-              m_next.time = Seconds (-1.0);
-              m_current.position = m_next.position;
-              m_current.time = now;
-              m_velocity = Vector (0,0,0);
-              NotifyCourseChange ();
-            }
-          else
-            {
-              m_current.time = now;
-            }
-
-          return;
-        }
-
-      m_current = m_next;
-      m_next = m_waypoints.front ();
-      m_waypoints.pop_front ();
-      newWaypoint = true;
-
-      const double t_span = (m_next.time - m_current.time).GetSeconds ();
-      NS_ASSERT (t_span > 0);
-      m_velocity.x = (m_next.position.x - m_current.position.x) / t_span;
-      m_velocity.y = (m_next.position.y - m_current.position.y) / t_span;
-      m_velocity.z = (m_next.position.z - m_current.position.z) / t_span;
-    }
-
-  if ( now > m_current.time ) // Won't ever be less, but may be equal
-    {
-      const double t_diff = (now - m_current.time).GetSeconds ();
-      m_current.position.x += m_velocity.x * t_diff;
-      m_current.position.y += m_velocity.y * t_diff;
-      m_current.position.z += m_velocity.z * t_diff;
-      m_current.time = now;
-    }*/
-
-  //if ( newWaypoint )
-    //{
-     // NotifyCourseChange ();
-    //}
 }
+
 Vector
 AdversaryMobilityModel::DoGetPosition (void) const
 {
   Update ();
-  return m_current.position;
+  return m_position;
 }
+
 void
 AdversaryMobilityModel::DoSetPosition (const Vector &position)
 {
-  const Time now = Simulator::Now ();
+  const bool was_moving = m_velocity.GetLength() > 0;
 
-  if ( m_first && m_initialPositionIsWaypoint )
-    {
-      AddWaypoint (Waypoint (now, position));
-      return;
-    }
+  m_position = position;
+  m_current = Waypoint();
+  m_velocity = Vector();
 
-  Update ();
-  m_current.time = std::max (now, m_next.time);
-  m_current.position = position;
-  m_velocity = Vector (0,0,0);
+  if (was_moving)
+  {
+    // This is only a course change if the node is actually moving
+    NotifyCourseChange ();
+  }
 
-  if ( !m_first && (now >= m_current.time) )
-    {
-      // This is only a course change if the node is actually moving
-      NotifyCourseChange ();
-    }
+  m_has_set_position = true;
 }
+
 void
 AdversaryMobilityModel::EndMobility (void)
 {
-  m_waypoints.clear ();
+  m_has_waypoint = false;
   m_current.time = Time(std::numeric_limits<uint64_t>::infinity());
-  m_next.time = m_current.time;
-  m_first = true;
+  m_velocity = Vector();
 }
 
 Vector
@@ -276,7 +156,5 @@ AdversaryMobilityModel::DoGetVelocity (void) const
 {
   return m_velocity;
 }
-
-
 
 } // namespace ns3
