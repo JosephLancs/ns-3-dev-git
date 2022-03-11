@@ -39,7 +39,7 @@ namespace ns3
     }
 
     Adnode::Adnode()
-        : m_dpd (Seconds (60))
+        : m_dpd (Seconds(60))
     {
         NS_LOG_FUNCTION (this);
     }
@@ -53,20 +53,22 @@ namespace ns3
     {
         Ptr<MobilityModel> mob = GetNode()->GetObject<MobilityModel>();
         const Vector adpos = mob->GetPosition();
+        //Vector srcpos;
         for(NodeContainer::Iterator n = m_source_nodes.Begin (); n != m_source_nodes.End (); n++)
         {
             Ptr<Node> object = *n;
             const Vector srcpos = object->GetObject<MobilityModel>()->GetPosition();
             if (CalculateDistance(adpos, srcpos) <= m_dist_to_calc)
             {
-                NS_LOG_INFO("Adpos: " << adpos << " srcpos: " << srcpos);
-                fprintf(stdout, "Distance between stc%f", CalculateDistance(adpos, srcpos));
+                NS_LOG_FUNCTION("Adpos: " << adpos << " srcpos: " << srcpos);
+
+                //fprintf(stdout, "Distance between stc%f", CalculateDistance(adpos, srcpos));
                 return true;
             }             
             else
             {
                 NS_LOG_DEBUG("test");
-                fprintf(stdout, "Distance between stc%f", CalculateDistance(adpos, srcpos));
+                //fprintf(stdout, "Distance between stc%f", CalculateDistance(adpos, srcpos));
             }
         }
         return false;
@@ -92,11 +94,11 @@ namespace ns3
         //TODO: consider packet filtering
 
         uint16_t port = udpHeader.GetDestinationPort();
-        NS_LOG_INFO("header" << port << ".");
+        NS_LOG_FUNCTION("header" << port << ".");
 
         if (udpHeader.GetDestinationPort () != 9)
         {
-            NS_LOG_INFO("adversary disgarding packet - not on port 9");
+            NS_LOG_FUNCTION("adversary disgarding packet - not on port 9");
             // AODV packets sent in broadcast are already managed - adversary discard
             return true;
         }
@@ -108,7 +110,7 @@ namespace ns3
             return true;
         }
 
-        NS_LOG_INFO("adversary processing packet");
+        NS_LOG_FUNCTION("adversary processing packet");
 
         Ptr<MobilityModel> mob = GetNode()->GetObject<MobilityModel>();
         NS_ASSERT(mob);
@@ -117,12 +119,13 @@ namespace ns3
         NS_ASSERT(admob);
         //error logging for null node from address
         Ptr<Node> n = Adnode::GetNodeFromAddress(from);
+        NS_LOG_FUNCTION("adnode from: " << from);
         NS_ASSERT(n);
         Ptr<MobilityModel> mobAdhoc = n->GetObject<MobilityModel>();
         
         NS_ASSERT(mobAdhoc);
-        NS_LOG_INFO("adhoc: " << mobAdhoc->GetPosition());
-        NS_LOG_INFO("mob: " << &admob << admob->GetPosition());
+        NS_LOG_FUNCTION("adhoc: " << mobAdhoc->GetPosition());
+        NS_LOG_FUNCTION("mob: " << &admob << admob->GetPosition());
 
         const Vector my_position = admob->GetPosition();
         Vector target_position = mobAdhoc->GetPosition();
@@ -133,7 +136,7 @@ namespace ns3
   
         admob->SetTarget(time_to_reach, target_position);
 
-        NS_LOG_INFO("Timetoreach: " << time_to_reach << " target pos: " << target_position);
+        NS_LOG_FUNCTION("Timetoreach: " << time_to_reach << " target pos: " << target_position);
 
         if(HasReachedSource(admob))
         {
