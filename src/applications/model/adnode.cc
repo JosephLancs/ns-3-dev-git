@@ -39,7 +39,7 @@ namespace ns3
     }
 
     Adnode::Adnode()
-        : m_dpd (Seconds (60))
+        : m_dpd (Seconds(60))
     {
         NS_LOG_FUNCTION (this);
     }
@@ -53,6 +53,7 @@ namespace ns3
     {
         Ptr<MobilityModel> mob = GetNode()->GetObject<MobilityModel>();
         const Vector adpos = mob->GetPosition();
+        //Vector srcpos;
         for(NodeContainer::Iterator n = m_source_nodes.Begin (); n != m_source_nodes.End (); n++)
         {
             Ptr<Node> object = *n;
@@ -60,13 +61,13 @@ namespace ns3
             if (CalculateDistance(adpos, srcpos) <= m_dist_to_calc)
             {
                 NS_LOG_INFO("Adpos: " << adpos << " srcpos: " << srcpos);
-                fprintf(stdout, "Distance between stc%f\n", CalculateDistance(adpos, srcpos));
+                //fprintf(stdout, "Distance between stc%f\n", CalculateDistance(adpos, srcpos));
                 return true;
             }
             else
             {
                 NS_LOG_DEBUG("test");
-                fprintf(stdout, "Distance between stc%f\n", CalculateDistance(adpos, srcpos));
+                //fprintf(stdout, "Distance between stc%f\n", CalculateDistance(adpos, srcpos));
             }
         }
         return false;
@@ -118,6 +119,7 @@ namespace ns3
         NS_ASSERT(admob);
         //error logging for null node from address
         Ptr<Node> n = Adnode::GetNodeFromAddress(from);
+        NS_LOG_FUNCTION("adnode from: " << from);
         NS_ASSERT(n);
         Ptr<MobilityModel> mobAdhoc = n->GetObject<MobilityModel>();
         

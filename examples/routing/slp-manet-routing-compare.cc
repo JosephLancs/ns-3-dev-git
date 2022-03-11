@@ -230,6 +230,8 @@ RoutingExperiment::CommandSetup (int argc, char **argv)
   cmd.AddValue ("Mobility-Model", "Choose mobility model for adhoc nodes", m_mobmod);
   cmd.AddValue ("adversary-nodes", "Number of adversary nodes", m_aNodes);
   cmd.AddValue ("seed", "Value of seed (uint32)", m_seed);
+  cmd.AddValue ("deltax", "deltax", m_delta_x);
+  cmd.AddValue ("deltay", "deltay", m_delta_y);
   cmd.Parse (argc, argv);
 }
 
@@ -277,7 +279,7 @@ RoutingExperiment::Run ()
   Config::SetDefault ("ns3::WifiRemoteStationManager::NonUnicastMode", StringValue (phyMode));
 
   //TODO: adnode velocity
-  Config::SetDefault ("ns3::Adnode::Velocity", UintegerValue(1));
+  Config::SetDefault ("ns3::Adnode::Velocity", UintegerValue(5));
   
 
   NodeContainer adhocNodes;
@@ -296,6 +298,7 @@ RoutingExperiment::Run ()
   YansWifiPhyHelper wifiPhy = YansWifiPhyHelper::Default ();
   wifiPhy.Set ("TxPowerStart", DoubleValue (m_txp));
   wifiPhy.Set ("TxPowerEnd", DoubleValue (m_txp));
+  wifiPhy.Set ("RxSensitivity", DoubleValue(-82));
 
   YansWifiChannelHelper wifiChannel;
   wifiChannel.SetPropagationDelay ("ns3::ConstantSpeedPropagationDelayModel");

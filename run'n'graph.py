@@ -11,8 +11,11 @@ nodes = 100
 advNodes = 3
 simTime = 200
 sendTime = 10
-transmissionPower = 7.5
+transmissionPower = -4
 mobilityMod = 1 # 1. stationary; 2. mobile
+deltax = 25
+deltay = 25
+seed = 50
 
 resultsToPlot = {}
 secondaryRTP = {}
@@ -25,6 +28,7 @@ def parseData(numNodes):
     for i in range(numNodes,numNodes + advNodes):
         fn = "advNode-%s-0.pcap" % i
         counter = 0
+        ttc = 0
         for ts, pkt in dpkt.pcap.Reader(open(fn,'rb')):
             counter+=1
             udp = dpkt.udp.UDP(pkt)       
@@ -46,13 +50,16 @@ def plotData():
 
 def main():
 
-    for numNodes in range(50, 150, 5):
+    for numNodes in range(120, 150, 100):
         cmd = "./waf --run \"slp-manet-routing-compare --protocol=" + str(protocol) + \
                                                     " --nodes=" + str(numNodes) + \
                                                     " --adversary-nodes=" + str(advNodes) + \
                                                     " --total-time=" + str(simTime) + \
                                                     " --send-start=" + str(sendTime) + \
                                                     " --transmit-power=" + str(transmissionPower) + \
+                                                    " --deltax=" + str(deltax) + \
+                                                    " --deltay=" + str(deltay) + \
+                                                    " --seed=" + str(seed) + \
                                                     " --Mobility-Model=" + str(mobilityMod) + "\""
 
         print(cmd)
@@ -62,7 +69,7 @@ def main():
         parseData(numNodes)
 
     print(resultsToPlot)
-    plotData()
+    #plotData()
 
 
 
