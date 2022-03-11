@@ -69,6 +69,9 @@ AdversaryMobilityModel::DoDispose (void)
 void
 AdversaryMobilityModel::SetTarget (const Time& t, const Vector& v)
 {
+  // Make sure the adversary is at its current position
+  Update ();
+
   const Time now = Simulator::Now ();
 
   const bool had_waypoint = m_has_waypoint;
@@ -83,6 +86,7 @@ AdversaryMobilityModel::SetTarget (const Time& t, const Vector& v)
 
   m_last_update = now;
 
+  // Do initial move
   Update ();
 
   if (had_waypoint)
