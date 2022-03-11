@@ -8,9 +8,6 @@
 #include "ns3/simulator.h"
 #include "ns3/node-container.h"
 #include "ns3/adnode-dpd.h"
-#include <vector>
-
-
 
 namespace ns3
 {
@@ -44,8 +41,7 @@ namespace ns3
             uint32_t m_velocity;
             NodeContainer m_source_nodes;
             uint32_t m_dist_to_calc;
-            DuplicatePacketDetection m_dpd;
-            //list(Ptr<Node>) m_source_nodes;
+            ns3::applications::adnode::DuplicatePacketDetection m_dpd;
     };
 }
 

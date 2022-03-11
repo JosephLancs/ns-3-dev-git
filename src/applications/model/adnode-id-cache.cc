@@ -25,10 +25,13 @@
  * Authors: Elena Buchatskaia <borovkovaes@iitp.ru>
  *          Pavel Boyko <boyko@iitp.ru>
  */
-#include "adnode-id-cache.h"
+#include "ns3/adnode-id-cache.h"
 #include <algorithm>
 
 namespace ns3 {
+namespace applications {
+namespace adnode {
+
 bool
 IdCache::IsDuplicate (Ipv4Address addr, uint32_t id)
 {
@@ -62,4 +65,6 @@ IdCache::GetSize ()
   return m_idCache.size ();
 }
 
+}
+}
 }

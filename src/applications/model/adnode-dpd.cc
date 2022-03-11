@@ -20,9 +20,11 @@
  *          Pavel Boyko <boyko@iitp.ru>
  */
 
-#include "adnode-dpd.h"
+#include "ns3/adnode-dpd.h"
 
 namespace ns3 {
+namespace applications {
+namespace adnode {
 
 bool
 DuplicatePacketDetection::IsDuplicate  (Ptr<const Packet> p, const Ipv4Header & header)
@@ -42,5 +44,7 @@ DuplicatePacketDetection::GetLifetime () const
 }
 
 
+}
+}
 }
 

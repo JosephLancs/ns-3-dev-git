@@ -4,7 +4,7 @@
 #include "ns3/adversary-mobility-model.h"
 #include "ns3/vector.h"
 #include "ns3/node.h"
-#include "adnode.h"
+#include "ns3/adnode.h"
 #include "ns3/uinteger.h"
 #include "ns3/udp-header.h"
 #include "ns3/packet.h"

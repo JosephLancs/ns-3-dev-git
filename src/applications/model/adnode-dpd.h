@@ -23,12 +23,14 @@
 #ifndef FLOODING_DPD_H
 #define FLOODING_DPD_H
 
-#include "adnode-id-cache.h"
+#include "ns3/adnode-id-cache.h"
 #include "ns3/nstime.h"
 #include "ns3/packet.h"
 #include "ns3/ipv4-header.h"
 
 namespace ns3 {
+namespace applications {
+namespace adnode {
 /**
  * \ingroup aodv
  *
@@ -69,6 +71,8 @@ private:
   IdCache m_idCache;
 };
 
+}
+}
 }
 
 #endif /* FLOODING_DPD_H */

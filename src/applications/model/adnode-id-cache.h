@@ -34,6 +34,9 @@
 #include <vector>
 
 namespace ns3 {
+namespace applications {
+namespace adnode {
+
 /**
  * \ingroup aodv
  *
@@ -111,7 +114,8 @@ private:
   Time m_lifetime;
 };
 
- // namespace aodv
+}
+} // namespace aodv
 }  // namespace ns3
 
 #endif /* FLOODING_ID_CACHE_H */
