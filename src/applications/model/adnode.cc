@@ -92,8 +92,8 @@ namespace ns3
         // Only process data packets
         uint16_t port = udpHeader.GetDestinationPort();
         NS_LOG_INFO("header" << port << ".");
-        NS_LOG_INFO("ipheader" << ipHeader << ".");
-        NS_LOG_INFO("udpheader" << udpHeader << ".");
+        NS_LOG_DEBUG("ipheader" << ipHeader << ".");
+        NS_LOG_DEBUG("udpheader" << udpHeader << ".");
 
         if (udpHeader.GetDestinationPort () != 9)
         {
@@ -105,11 +105,11 @@ namespace ns3
         // Check to see if the packet is a duplicate
         if (m_dpd.IsDuplicate(packet, ipHeader))
         {
-            NS_LOG_DEBUG("Dropping duplicate packet " << packet << " header:" << ipHeader);
+            NS_LOG_INFO("Dropping duplicate packet " << packet << " header:" << ipHeader);
             return true;
         }
 
-        NS_LOG_INFO("adversary processing packet");
+        NS_LOG_DEBUG("adversary processing packet");
 
         Ptr<MobilityModel> mob = GetNode()->GetObject<MobilityModel>();
         NS_ASSERT(mob);
@@ -122,8 +122,8 @@ namespace ns3
         Ptr<MobilityModel> mobAdhoc = n->GetObject<MobilityModel>();
         
         NS_ASSERT(mobAdhoc);
-        NS_LOG_INFO("adhoc: " << mobAdhoc->GetPosition());
-        NS_LOG_INFO("mob: " << admob << admob->GetPosition());
+        NS_LOG_DEBUG("adhoc: " << mobAdhoc->GetPosition());
+        NS_LOG_DEBUG("mob: " << admob << admob->GetPosition());
 
         const Vector my_position = admob->GetPosition();
         Vector target_position = mobAdhoc->GetPosition();
@@ -134,7 +134,7 @@ namespace ns3
   
         admob->SetTarget(time_to_reach, target_position);
 
-        NS_LOG_INFO("Timetoreach: " << time_to_reach << " target pos: " << target_position);
+        NS_LOG_DEBUG("Timetoreach: " << time_to_reach << " target pos: " << target_position);
 
         if(HasReachedSource(admob))
         {
@@ -162,6 +162,7 @@ namespace ns3
             }
         } 
         
+        NS_LOG_ERROR("Failed to find node for " << from);
         return NULL;
     }
 
@@ -176,6 +177,5 @@ namespace ns3
             Ptr<NetDevice> dev = n->GetDevice (i);
             dev->SetPromiscReceiveCallback(MakeCallback(&Adnode::ReceivePacket, this));
         }
-
     }
 }
