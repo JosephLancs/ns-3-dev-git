@@ -128,11 +128,11 @@ RoutingExperiment::RoutingExperiment ()
   : port (9), // Discard port (RFC 863)
     bytesTotal (0),
     packetsReceived (0),
-    m_seed(10),
+    m_seed(12),
     m_CSVfileName ("slp-manet-routing.output.csv"),
     m_nSinks (1),
     m_nNodes (100),
-    m_aNodes(3),
+    m_aNodes(1),
     m_protocolName(""),
     m_txp (1),
     m_traceMobility (false),
@@ -252,8 +252,8 @@ main (int argc, char *argv[])
 void
 RoutingExperiment::Run ()
 {
-  //RngSeedManager::SetSeed(m_seed);
-  RngSeedManager::SetSeed(10);
+  RngSeedManager::SetSeed(m_seed);
+  //RngSeedManager::SetSeed(10);
 
   NS_LOG_DEBUG("begin running");
   Packet::EnablePrinting ();
@@ -468,8 +468,6 @@ RoutingExperiment::Run ()
           }
         }
       }
-
-      //RngSeedManager::SetSeed(14);
 
       NS_LOG_DEBUG("source nodes added to adnodes");
       auto target = InetSocketAddress (adhocInterfaces.GetAddress (target_id), port);
