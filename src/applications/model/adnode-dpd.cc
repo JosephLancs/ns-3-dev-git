@@ -23,7 +23,6 @@
 #include "adnode-dpd.h"
 
 namespace ns3 {
-namespace applications {
 
 bool
 DuplicatePacketDetection::IsDuplicate  (Ptr<const Packet> p, const Ipv4Header & header)
@@ -43,6 +42,5 @@ DuplicatePacketDetection::GetLifetime () const
 }
 
 
-}
 }
 

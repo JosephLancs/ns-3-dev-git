@@ -29,7 +29,6 @@
 #include <algorithm>
 
 namespace ns3 {
-namespace applications {
 bool
 IdCache::IsDuplicate (Ipv4Address addr, uint32_t id)
 {
@@ -63,5 +62,4 @@ IdCache::GetSize ()
   return m_idCache.size ();
 }
 
-}
 }

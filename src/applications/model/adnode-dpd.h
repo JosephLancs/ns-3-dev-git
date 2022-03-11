@@ -29,7 +29,6 @@
 #include "ns3/ipv4-header.h"
 
 namespace ns3 {
-namespace applications {
 /**
  * \ingroup aodv
  *
@@ -70,7 +69,6 @@ private:
   IdCache m_idCache;
 };
 
-}
 }
 
 #endif /* FLOODING_DPD_H */
