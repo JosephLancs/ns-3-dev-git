@@ -67,6 +67,7 @@
 
 #include <fstream>
 #include <iostream>
+#include <math.h>
 #include "ns3/core-module.h"
 #include "ns3/network-module.h"
 #include "ns3/internet-module.h"
@@ -106,6 +107,8 @@ private:
   uint32_t bytesTotal;
   uint32_t packetsReceived;
   uint32_t m_seed;
+  uint32_t m_delta_x;
+  uint32_t m_delta_y;
 
   std::string m_CSVfileName;
   int m_nSinks;
@@ -129,6 +132,8 @@ RoutingExperiment::RoutingExperiment ()
     bytesTotal (0),
     packetsReceived (0),
     m_seed(12),
+    m_delta_x(8),
+    m_delta_y(8),
     m_CSVfileName ("slp-manet-routing.output.csv"),
     m_nSinks (1),
     m_nNodes (100),
@@ -318,8 +323,8 @@ RoutingExperiment::Run ()
   pos.SetTypeId ("ns3::GridPositionAllocator");
   pos.Set("MinX", DoubleValue (0.0));
   pos.Set("MinY", DoubleValue (0.0));
-  pos.Set("DeltaX", DoubleValue (8));
-  pos.Set("DeltaY", DoubleValue (8));
+  pos.Set("DeltaX", DoubleValue (m_delta_x));
+  pos.Set("DeltaY", DoubleValue (m_delta_y));
   pos.Set("GridWidth", UintegerValue (sqrt(m_nNodes)));
   pos.Set("LayoutType", StringValue ("RowFirst"));
 
@@ -351,7 +356,22 @@ RoutingExperiment::Run ()
 
   int64_t adStreamIndex = 0;
 
-  Ptr<PositionAllocator> adTaPositionAlloc = pos.Create ()->GetObject<PositionAllocator> ();
+  ObjectFactory adnodePos;
+  adnodePos.SetTypeId ("ns3::RandomRectanglePositionAllocator");
+
+  uint32_t x_val = round(m_delta_x * sqrt(m_nNodes));
+  std::stringstream ssxpos;
+  ssxpos << "ns3::UniformRandomVariable[Min=0.0|Max=" << x_val << "]";
+
+  uint32_t y_val = round(m_delta_y * sqrt(m_nNodes));
+  std::stringstream ssypos;
+  ssypos << "ns3::UniformRandomVariable[Min=0.0|Max=" << y_val << "]";
+
+  adnodePos.Set ("X", StringValue (ssxpos.str()));
+  adnodePos.Set ("Y", StringValue (ssypos.str()));
+
+
+  Ptr<PositionAllocator> adTaPositionAlloc = adnodePos.Create ()->GetObject<PositionAllocator> ();
   adStreamIndex += adTaPositionAlloc->AssignStreams (adStreamIndex);
 
   mobilityAdversary.SetMobilityModel ("ns3::AdversaryMobilityModel");
