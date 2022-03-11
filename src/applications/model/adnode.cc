@@ -60,13 +60,13 @@ namespace ns3
             if (CalculateDistance(adpos, srcpos) <= m_dist_to_calc)
             {
                 NS_LOG_INFO("Adpos: " << adpos << " srcpos: " << srcpos);
-                fprintf(stdout, "Distance between stc%f", CalculateDistance(adpos, srcpos));
+                fprintf(stdout, "Distance between stc%f\n", CalculateDistance(adpos, srcpos));
                 return true;
-            }             
+            }
             else
             {
                 NS_LOG_DEBUG("test");
-                fprintf(stdout, "Distance between stc%f", CalculateDistance(adpos, srcpos));
+                fprintf(stdout, "Distance between stc%f\n", CalculateDistance(adpos, srcpos));
             }
         }
         return false;
@@ -79,8 +79,7 @@ namespace ns3
                                const Address &to,
                                NetDevice::PacketType packetType)
     {
-
-        NS_LOG_FUNCTION(this << "Receive adnode: " << packet);
+        NS_LOG_FUNCTION(this << "Receive adnode from:" << from << " to:" << to);
 
         Ptr<Packet> m_packet;
         Ipv4Header ipHeader;
@@ -89,14 +88,16 @@ namespace ns3
         m_packet = packet -> Copy();
         m_packet->RemoveHeader (ipHeader);
         m_packet->PeekHeader(udpHeader);
-        //TODO: consider packet filtering
 
+        // Only process data packets
         uint16_t port = udpHeader.GetDestinationPort();
         NS_LOG_INFO("header" << port << ".");
+        NS_LOG_INFO("ipheader" << ipHeader << ".");
+        NS_LOG_INFO("udpheader" << udpHeader << ".");
 
         if (udpHeader.GetDestinationPort () != 9)
         {
-            NS_LOG_INFO("adversary disgarding packet - not on port 9");
+            NS_LOG_INFO("adversary discarding packet - not on port 9");
             // AODV packets sent in broadcast are already managed - adversary discard
             return true;
         }
@@ -104,7 +105,7 @@ namespace ns3
         // Check to see if the packet is a duplicate
         if (m_dpd.IsDuplicate(packet, ipHeader))
         {
-            NS_LOG_DEBUG("Dropping duplicate packet " << packet);
+            NS_LOG_DEBUG("Dropping duplicate packet " << packet << " header:" << ipHeader);
             return true;
         }
 
@@ -122,7 +123,7 @@ namespace ns3
         
         NS_ASSERT(mobAdhoc);
         NS_LOG_INFO("adhoc: " << mobAdhoc->GetPosition());
-        NS_LOG_INFO("mob: " << &admob << admob->GetPosition());
+        NS_LOG_INFO("mob: " << admob << admob->GetPosition());
 
         const Vector my_position = admob->GetPosition();
         Vector target_position = mobAdhoc->GetPosition();
