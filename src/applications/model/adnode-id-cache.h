@@ -26,8 +26,8 @@
  *          Pavel Boyko <boyko@iitp.ru>
  */
 
-#ifndef FLOODING_ID_CACHE_H
-#define FLOODING_ID_CACHE_H
+#ifndef ADNODE_ID_CACHE_H
+#define ADNODE_ID_CACHE_H
 
 #include "ns3/ipv4-address.h"
 #include "ns3/simulator.h"

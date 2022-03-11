@@ -20,8 +20,8 @@
  *          Pavel Boyko <boyko@iitp.ru>
  */
 
-#ifndef FLOODING_DPD_H
-#define FLOODING_DPD_H
+#ifndef ADNODE_DPD_H
+#define ADNODE_DPD_H
 
 #include "ns3/adnode-id-cache.h"
 #include "ns3/nstime.h"
