@@ -1,5 +1,6 @@
 import os
 import dpkt
+import numpy
 import matplotlib.pylab as plt
 
 ##########################
@@ -16,9 +17,10 @@ mobilityMod = 2 # 1. stationary; 2. mobile
 deltax = 25
 deltay = 25
 seed = 50
-nodeSpeed = 4
+numNodes = 75
+#nodeSpeed = 4
 
-repeats = 1
+repeats = 50
 
 resultsToPlot = {}
 secondaryRTP = {}
@@ -37,9 +39,11 @@ def parseData(numNodes):
             udp = dpkt.udp.UDP(pkt)
             ttc=ts       
         advTotPackets += counter
-        print("Total number of packets in the adversary " + str(i) + " pcap file: " + str(counter))
-
-    return ttc
+        #print("Total number of packets in the adversary " + str(i) + " pcap file: " + str(counter))
+        print("Time to capture: " + str(ttc))
+        if (ttc > 0 and ttc < 190):
+            return True
+    return False
     #resultsToPlot[numNodes] = ttc
 
 def plotData():
@@ -47,16 +51,16 @@ def plotData():
     lst = sorted(resultsToPlot.items())
     x, y = zip(*lst)
     plt.title('Number of adhoc nodes vs time to capture in Flooding', size=16)
-    plt.xlabel('Number of nodes', size=14)
-    plt.ylabel('Time to capture', size=14)
+    plt.xlabel('Node speed', size=14)
+    plt.ylabel('Capture Ratio (%)', size=14)
     plt.plot(x, y)
     plt.show()
 
 
 def main():
     global seed
-    for numNodes in range(50, 250, 50):
-        ttcs = 0
+    for nodeSpeed in numpy.arange(0.5, 4, 0.5):
+        captures = 0
         for i in range(0,repeats):
             seed = seed + 1
 
@@ -76,15 +80,19 @@ def main():
 
             os.system(cmd)
 
-            ttc = parseData(numNodes)
-
-            ttcs = ttcs + ttc
-
-        resultsToPlot[numNodes] = ttcs / repeats
+            captured = parseData(numNodes)
+            
+            if captured:
+                print("packet captured!")
+                captures = captures + 1
+        
+        print(captures)
+        print("capture ratio for " + str(nodeSpeed) + ": " + str((captures / repeats) * 100))
+        resultsToPlot[nodeSpeed] = (captures / repeats) * 100
 
             
 
-    #print(resultsToPlot)
+    print(resultsToPlot)
     plotData()
 
 
