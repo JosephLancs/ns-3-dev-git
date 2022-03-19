@@ -109,6 +109,7 @@ private:
   uint32_t m_seed;
   uint32_t m_delta_x;
   uint32_t m_delta_y;
+  double m_nodeSpeed;
 
   std::string m_CSVfileName;
   int m_nSinks;
@@ -134,6 +135,7 @@ RoutingExperiment::RoutingExperiment ()
     m_seed(12),
     m_delta_x(8),
     m_delta_y(8),
+    m_nodeSpeed(0.5),
     m_CSVfileName ("slp-manet-routing.output.csv"),
     m_nSinks (1),
     m_nNodes (100),
@@ -232,6 +234,7 @@ RoutingExperiment::CommandSetup (int argc, char **argv)
   cmd.AddValue ("seed", "Value of seed (uint32)", m_seed);
   cmd.AddValue ("deltax", "deltax", m_delta_x);
   cmd.AddValue ("deltay", "deltay", m_delta_y);
+  cmd.AddValue ("node-speed", "the speed of adhoc nodes (m/s)", m_nodeSpeed);
   cmd.Parse (argc, argv);
 }
 
@@ -269,7 +272,7 @@ RoutingExperiment::Run ()
   uint32_t packet_size (64);
   std::string phyMode ("DsssRate11Mbps");
   std::string tr_name ("slp-manet-routing-compare");
-  double nodeSpeed = 0.5; //in m/s
+  double nodeSpeed = m_nodeSpeed; //in m/s
   int nodePause = 0; //in s
 
   Config::SetDefault ("ns3::OnOffApplication::PacketSize", UintegerValue (packet_size));
