@@ -313,6 +313,8 @@ RoutingExperiment::Run ()
 
   NetDeviceContainer adhocDevices = wifi.Install (wifiPhy, wifiMac, adhocNodes);
   NetDeviceContainer adversaryDevices = wifi.Install (wifiPhy, wifiMac, adversaryNodes);
+
+  
 //parameterise distance
 
 
