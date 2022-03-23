@@ -98,7 +98,9 @@ namespace ns3
 
         if (udpHeader.GetDestinationPort () != 9)
         {
-            NS_LOG_INFO("adversary discarding packet - not on port 9");
+            NS_LOG_INFO("adversary discarding packet on port "
+                << udpHeader.GetDestinationPort ()
+                << " - not on port 9");
             // AODV packets sent in broadcast are already managed - adversary discard
             return true;
         }
@@ -119,7 +121,7 @@ namespace ns3
         NS_ASSERT(admob);
         //error logging for null node from address
         Ptr<Node> n = Adnode::GetNodeFromAddress(from);
-        NS_LOG_FUNCTION("adnode from: " << from);
+        NS_LOG_INFO("adnode from: " << from);
         NS_ASSERT(n);
         Ptr<MobilityModel> mobAdhoc = n->GetObject<MobilityModel>();
         
