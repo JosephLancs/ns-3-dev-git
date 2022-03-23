@@ -109,6 +109,7 @@ private:
   uint32_t m_seed;
   uint32_t m_delta_x;
   uint32_t m_delta_y;
+  uint32_t m_advPos;
   double m_nodeSpeed;
 
   std::string m_CSVfileName;
@@ -135,6 +136,7 @@ RoutingExperiment::RoutingExperiment ()
     m_seed(12),
     m_delta_x(8),
     m_delta_y(8),
+    m_advPos(1),
     m_nodeSpeed(0.5),
     m_CSVfileName ("slp-manet-routing.output.csv"),
     m_nSinks (1),
@@ -236,6 +238,7 @@ RoutingExperiment::CommandSetup (int argc, char **argv)
   cmd.AddValue ("seed", "Value of seed (uint32)", m_seed);
   cmd.AddValue ("deltax", "deltax", m_delta_x);
   cmd.AddValue ("deltay", "deltay", m_delta_y);
+  cmd.AddValue ("advPos", "advPos", m_advPos);
   cmd.AddValue ("node-speed", "the speed of adhoc nodes (m/s)", m_nodeSpeed);
   cmd.Parse (argc, argv);
 }
@@ -264,8 +267,8 @@ main (int argc, char *argv[])
 void
 RoutingExperiment::Run ()
 {
+  
   RngSeedManager::SetSeed(m_seed);
-  //RngSeedManager::SetSeed(10);
 
   NS_LOG_DEBUG("begin running");
   Packet::EnablePrinting ();
@@ -345,6 +348,7 @@ RoutingExperiment::Run ()
   ssSpeed << "ns3::UniformRandomVariable[Min=0.0|Max=" << nodeSpeed << "]";
   std::stringstream ssPause;
   ssPause << "ns3::ConstantRandomVariable[Constant=" << nodePause << "]";
+
   switch(m_mobmod)
   {
     case 1:
@@ -359,6 +363,7 @@ RoutingExperiment::Run ()
       default:
         NS_FATAL_ERROR("Error in Mobility Model parameter.");
   }
+
   mobilityAdhoc.SetPositionAllocator (taPositionAlloc);
   mobilityAdhoc.Install (adhocNodes);
   streamIndex += mobilityAdhoc.AssignStreams (adhocNodes, streamIndex);
@@ -368,17 +373,46 @@ RoutingExperiment::Run ()
 
   ObjectFactory adnodePos;
   adnodePos.SetTypeId ("ns3::RandomRectanglePositionAllocator");
+  uint32_t net_max_x = round((m_delta_x * sqrt(m_nNodes)));
+  uint32_t net_max_y = round((m_delta_y * sqrt(m_nNodes)));
 
-  uint32_t x_val_min = round((m_delta_x * sqrt(m_nNodes))/3);
-  uint32_t x_val_max = round((2 * m_delta_x * sqrt(m_nNodes))/3);
   std::stringstream ssxpos;
-  ssxpos << "ns3::UniformRandomVariable[Min=" << x_val_min << "|Max=" << x_val_max << "]";
-
-  uint32_t y_val_min = round((2 * m_delta_y * sqrt(m_nNodes))/3);
-  uint32_t y_val_max = round((m_delta_y * sqrt(m_nNodes))/3);
   std::stringstream ssypos;
-  ssypos << "ns3::UniformRandomVariable[Min=" << y_val_min << "|Max=" << y_val_max << "]";
+  u_int32_t x_val_min;
+  u_int32_t x_val_max;
+  u_int32_t y_val_min;
+  u_int32_t y_val_max;
 
+  switch(m_advPos)
+  {
+    case 1:
+      x_val_min = round((2 * m_delta_x * sqrt(m_nNodes))/3);
+      ssxpos << "ns3::UniformRandomVariable[Min=" << x_val_min << "|Max=" << net_max_y << "]";
+
+      y_val_min = round((2 * m_delta_y * sqrt(m_nNodes))/3);
+      
+      ssypos << "ns3::UniformRandomVariable[Min=" << y_val_min << "|Max=" << net_max_y << "]";
+    case 2:
+      x_val_min = round((m_delta_x * sqrt(m_nNodes))/3);
+      x_val_max = round((2 * m_delta_x * sqrt(m_nNodes))/3);
+      ssxpos << "ns3::UniformRandomVariable[Min=" << x_val_min << "|Max=" << x_val_max << "]";
+
+      y_val_min = round((m_delta_y * sqrt(m_nNodes))/3);
+      y_val_max = round((2 * m_delta_y * sqrt(m_nNodes))/3);
+      
+      ssypos << "ns3::UniformRandomVariable[Min=" << y_val_min << "|Max=" << y_val_max << "]";
+      break;
+
+    case 3:
+      ssxpos << "ns3::UniformRandomVariable[Min=0|Max=" << net_max_x << "]";
+      ssypos << "ns3::UniformRandomVariable[Min=0|Max=" << net_max_y << "]";
+      break;
+    default:
+      NS_FATAL_ERROR("incorrect parameter");
+  }
+
+  NS_LOG_UNCOND("Bound box: (" << x_val_min << ", " << y_val_min << "), (" << x_val_max << ", " << y_val_max << ")");
+  NS_LOG_UNCOND("Netsize: (0,0), (" << net_max_x << ", " << net_max_y << ")");
   adnodePos.Set ("X", StringValue (ssxpos.str()));
   adnodePos.Set ("Y", StringValue (ssypos.str()));
 
@@ -489,14 +523,25 @@ RoutingExperiment::Run ()
       {
         Ptr<Node> object = *n;
         Ptr<Adnode> ad;
+        
         for(uint32_t i = 0; i < object->GetNApplications(); ++i)
         {
           NS_LOG_DEBUG("app found");
           ad = object->GetApplication(i)->GetObject<Adnode>();
           if(ad != NULL)
           {
+
             ad->Add_Sim_Source(source_node);
             NS_LOG_DEBUG("adnode found");
+          }
+          Ptr<MobilityModel> mobadv = object->GetObject<MobilityModel>();
+          Ptr<MobilityModel> mobsrc = source_node->GetObject<MobilityModel>();
+          if(mobadv!=NULL)
+          {
+            Vector adpos = mobadv->GetPosition();
+            Vector scpos = mobsrc->GetPosition();
+            double dist = CalculateDistance(adpos, scpos);
+            NS_LOG_UNCOND("adv distance: " << dist);
           }
         }
       }

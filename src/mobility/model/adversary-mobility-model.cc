@@ -147,7 +147,7 @@ void
 AdversaryMobilityModel::DoSetPosition (const Vector &position)
 {
   const bool was_moving = m_velocity.GetLength() > 0;
-
+ 
   m_position = position;
   m_current = Waypoint();
   m_velocity = Vector();
