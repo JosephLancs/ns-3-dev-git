@@ -96,6 +96,8 @@ namespace ns3
         NS_LOG_DEBUG("ipheader" << ipHeader << ".");
         NS_LOG_DEBUG("udpheader" << udpHeader << ".");
 
+
+        NS_LOG_UNCOND("adport: " << port);
         if (udpHeader.GetDestinationPort () != 9)
         {
             NS_LOG_INFO("adversary discarding packet - not on port 9");
