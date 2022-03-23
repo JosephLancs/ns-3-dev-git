@@ -180,6 +180,8 @@ RoutingExperiment::ReceivePacket (Ptr<Socket> socket)
       packetsReceived += 1;
       NS_LOG_UNCOND (packetsReceived << ": " << PrintReceivedPacket (socket, packet, senderAddress));
     }
+
+    //NS_LOG
 }
 
 void
@@ -367,13 +369,15 @@ RoutingExperiment::Run ()
   ObjectFactory adnodePos;
   adnodePos.SetTypeId ("ns3::RandomRectanglePositionAllocator");
 
-  uint32_t x_val = round(m_delta_x * sqrt(m_nNodes));
+  uint32_t x_val_min = round((m_delta_x * sqrt(m_nNodes))/3);
+  uint32_t x_val_max = round((2 * m_delta_x * sqrt(m_nNodes))/3);
   std::stringstream ssxpos;
-  ssxpos << "ns3::UniformRandomVariable[Min=0.0|Max=" << x_val << "]";
+  ssxpos << "ns3::UniformRandomVariable[Min=" << x_val_min << "|Max=" << x_val_max << "]";
 
-  uint32_t y_val = round(m_delta_y * sqrt(m_nNodes));
+  uint32_t y_val_min = round((2 * m_delta_y * sqrt(m_nNodes))/3);
+  uint32_t y_val_max = round((m_delta_y * sqrt(m_nNodes))/3);
   std::stringstream ssypos;
-  ssypos << "ns3::UniformRandomVariable[Min=0.0|Max=" << y_val << "]";
+  ssypos << "ns3::UniformRandomVariable[Min=" << y_val_min << "|Max=" << y_val_max << "]";
 
   adnodePos.Set ("X", StringValue (ssxpos.str()));
   adnodePos.Set ("Y", StringValue (ssypos.str()));
